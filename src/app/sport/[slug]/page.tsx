@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { COMBO } from "@config/admin";
 import { ComboGrid } from "@/components/combo";
 import { MatchTable } from "@/components/matches";
 import { FreshnessBar, PageTitle } from "@/components/ui";
@@ -38,6 +39,12 @@ export default async function SportPage({ params }: { params: Promise<{ slug: st
         <h2 id="combos-h" className="mb-3 text-lg font-semibold">
           {sport.name} combos
         </h2>
+        {eligible < COMBO.MAX_SIZE ? (
+          <p className="mb-3 text-sm muted" data-testid="size-limit">
+            Only {eligible} eligible {sport.pluralLabel} in the next 3 days
+            {eligible >= COMBO.MIN_SIZE ? `, so ${sport.name.toLowerCase()} combos can have at most ${eligible} legs.` : ` – fewer than the ${COMBO.MIN_SIZE} legs a combo needs.`} Nothing is padded.
+          </p>
+        ) : null}
         <ComboGrid
           combos={combos}
           emptyHint={`Only ${eligible} eligible ${sport.pluralLabel} in the next 3 days – a 7-leg combo needs 7. Nothing was padded. You can still build combos mixing sports.`}
