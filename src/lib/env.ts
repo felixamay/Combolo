@@ -51,7 +51,6 @@ const schema = z.object({
   AGE_GATE_ENABLED: bool(true),
   AGE_GATE_MIN_AGE: z.coerce.number().int().min(18).max(25).default(18),
   CRON_SECRET: optStr,
-  RUN_WORKER_JOBS: bool(true),
   QUOTA_SAFETY_RESERVE: z.coerce.number().int().min(0).default(3),
 });
 

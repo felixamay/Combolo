@@ -7,17 +7,19 @@ import { getEnv } from "@/lib/env";
 import { ageGateRequired, getTz } from "@/lib/request";
 import "./globals.css";
 
-const env = getEnv();
-
-export const metadata: Metadata = {
-  title: { default: `${env.SITE_NAME} – data-driven combo analysis`, template: `%s · ${env.SITE_NAME}` },
-  description: "Multi-leg combo (accumulator / parlay) analysis built from real head-to-head statistics, rankings and form. Informational only – no bets are taken.",
-  metadataBase: new URL(env.SITE_URL),
-};
+export function generateMetadata(): Metadata {
+  const env = getEnv();
+  return {
+    title: { default: `${env.SITE_NAME} – data-driven combo analysis`, template: `%s · ${env.SITE_NAME}` },
+    description: "Multi-leg combo (accumulator / parlay) analysis built from real head-to-head statistics, rankings and form. Informational only – no bets are taken.",
+    metadataBase: new URL(env.SITE_URL),
+  };
+}
 
 const themeScript = `try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark')}catch(e){}`;
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
+  const env = getEnv();
   const tz = await getTz();
   const gate = await ageGateRequired();
   return (
