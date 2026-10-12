@@ -2,6 +2,7 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "../lib/db";
 import { generateStoredCombos, settleCombos, expireStarted } from "../lib/combos/service";
 import { log } from "../lib/log";
+import { ensureSports } from "../lib/seed";
 import { refreshFixtures } from "./fixtures";
 import { refreshForm } from "./form";
 import { refreshH2H } from "./h2h";
@@ -112,6 +113,7 @@ export async function runJob(name: string, opts: { deadline?: number; now?: Date
     return { name, status: "skipped", errors: ["already running"] };
   }
 
+  await ensureSports();
   const run = await prisma.jobRun.create({ data: { name } });
   log.info(`job ${name} started`);
   try {

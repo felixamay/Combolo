@@ -64,7 +64,8 @@ export interface PersistStats {
   created: number;
   confirmed: number;
   superseded: number;
-  insufficient: Array<{ slot: string; eligible: number; requested: number }>;
+  insufficient: number;
+  insufficientSlots: string[];
 }
 
 interface Slot {
@@ -151,7 +152,7 @@ async function persist(built: BuiltCombo, slot: Slot, tz: string, now: Date, sta
  */
 export async function generateStoredCombos(now = new Date(), tz = getEnv().DEFAULT_TIMEZONE): Promise<PersistStats> {
   await expireStarted(now);
-  const stats: PersistStats = { created: 0, confirmed: 0, superseded: 0, insufficient: [] };
+  const stats: PersistStats = { created: 0, confirmed: 0, superseded: 0, insufficient: 0, insufficientSlots: [] };
   const cands = await loadCandidates(now);
   for (const slot of slots()) {
     const pool = slot.sport ? cands.filter((c) => c.sport === slot.sport) : cands;
@@ -159,7 +160,10 @@ export async function generateStoredCombos(now = new Date(), tz = getEnv().DEFAU
     if (!res.ok) {
       const active = await prisma.combo.updateMany({ where: { status: "ACTIVE", kind: slot.kind, sportId: slot.sport, strategy: slot.strategy, requestedSize: slot.size }, data: { status: "SUPERSEDED" } });
       stats.superseded += active.count;
-      if (slot.strategy === "TOP") stats.insufficient.push({ slot: slotLabel(slot), eligible: res.eligibleCount, requested: slot.size });
+      if (slot.strategy === "TOP") {
+        stats.insufficient++;
+        if (res.eligibleCount > 0) stats.insufficientSlots.push(`${slotLabel(slot)} (eligible ${res.eligibleCount})`);
+      }
       continue;
     }
     if (slot.strategy === "DIVERSIFIED") {
