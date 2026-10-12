@@ -160,6 +160,5 @@ export async function backfillApiTennis(ctx: JobContext): Promise<JobResult> {
     oldest = start;
     await prisma.keyValue.upsert({ where: { key }, create: { key, value: { oldest: oldest.toISOString() } }, update: { value: { oldest: oldest.toISOString() } } });
   }
-  void entityKey;
   return { summary: { callsUsed: used, matchesLoaded: loaded, oldestLoaded: oldest.toISOString().slice(0, 10), target: target.toISOString().slice(0, 10) }, errors };
 }

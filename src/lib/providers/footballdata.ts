@@ -191,7 +191,6 @@ export async function fetchStandings(code: string): Promise<NormStandings | null
     }
   }
   if (rows.length === 0) return null;
-  void num;
   return {
     provider: "footballdata",
     scope: "v4",

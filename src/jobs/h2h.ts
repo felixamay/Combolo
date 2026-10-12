@@ -137,6 +137,5 @@ export async function refreshH2H(ctx: JobContext): Promise<JobResult> {
     }
     await storeH2H(m.sportId, s.kind, a, b, source);
   }
-  void entityKey;
   return { summary: stats, errors };
 }

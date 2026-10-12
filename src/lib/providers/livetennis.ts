@@ -106,4 +106,3 @@ export async function fetchPlayer(id: string): Promise<LiveTennisPlayer> {
   return { id: p.id, name: p.name, tour: p.tour ?? null, country: p.country ?? null, ranking: p.ranking ?? null, rankingPoints: p.ranking_points ?? null, hand: p.hand ?? null };
 }
 
-void num;

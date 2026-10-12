@@ -119,7 +119,6 @@ export async function refreshTennisRankings(ctx: JobContext, errors: string[], r
   const weekAgo = new Date(startOfUtcDay().getTime() - 6 * 86400_000);
   for (const tour of ["ATP", "WTA"] as const) {
     const fresh = await prisma.rankingSnapshot.count({ where: { scopeKey: `tennis:${tour}`, snapshotDate: { gte: weekAgo }, source: { not: "livetennis" } } });
-    if (fresh > 0 && !ctx.bootstrap) continue;
     if (fresh > 0) continue;
     if (apitennis.apiTennisEnabled()) {
       const s = await attempt(`apitennis rankings ${tour}`, errors, () => apitennis.fetchRankings(tour));
@@ -174,6 +173,5 @@ export async function refreshTennisRankings(ctx: JobContext, errors: string[], r
       }
     }
   }
-  void getEnv;
   return counts;
 }

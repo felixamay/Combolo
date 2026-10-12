@@ -176,6 +176,5 @@ export async function fetchOdds(dateStart: string, dateStop: string, eventTypeKe
     }
     if (bookmakers.length) out.push({ eventKey, bookmakers });
   }
-  void str;
   return out;
 }
