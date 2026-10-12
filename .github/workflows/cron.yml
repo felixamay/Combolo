@@ -1,0 +1,30 @@
+# Alternative scheduler for Vercel Hobby (whose cron is limited to once per day):
+# GitHub Actions calls the same /api/cron/<job> endpoints on the schedule in config/schedule.ts.
+# Add repository secrets APP_URL (e.g. https://your-app.vercel.app) and CRON_SECRET, then delete the
+# "crons" block in vercel.json if you use this instead.
+name: Scheduled jobs
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+    - cron: "20 * * * *"
+  workflow_dispatch:
+    inputs:
+      job:
+        description: Job name (refresh, results, backtest, ...)
+        required: true
+        default: refresh
+
+jobs:
+  call:
+    runs-on: ubuntu-latest
+    if: ${{ vars.USE_GITHUB_CRON == 'true' || github.event_name == 'workflow_dispatch' }}
+    steps:
+      - name: Pick job
+        id: pick
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then echo "job=${{ inputs.job }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event.schedule }}" = "0 */6 * * *" ]; then echo "job=refresh" >> $GITHUB_OUTPUT
+          else echo "job=results" >> $GITHUB_OUTPUT; fi
+      - name: Call endpoint
+        run: |
+          curl --fail-with-body -sS -m 330 -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" "${{ secrets.APP_URL }}/api/cron/${{ steps.pick.outputs.job }}"
