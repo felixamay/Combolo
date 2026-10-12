@@ -38,6 +38,8 @@ const schema = z.object({
   TENNIS_COMMERCIAL_MODE: bool(false),
   SACKMANN_ATP_BASE_URL: z.string().default("https://raw.githubusercontent.com/JeffSackmann/tennis_atp/master"),
   SACKMANN_WTA_BASE_URL: z.string().default("https://raw.githubusercontent.com/JeffSackmann/tennis_wta/master"),
+  TENNIS_BACKFILL_DAYS: z.coerce.number().int().min(0).max(1500).default(120),
+  TENNIS_BACKFILL_CALLS_PER_RUN: z.coerce.number().int().min(0).max(100).default(6),
   SACKMANN_HISTORY_YEARS: z.coerce.number().int().min(1).max(30).default(6),
 
   FEATURE_ODDS: bool(false),
