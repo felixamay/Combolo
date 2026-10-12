@@ -181,7 +181,7 @@ export interface ModelConfig {
 }
 
 export const MODEL: ModelConfig = {
-  weights: { strength: 0.9, elo: 1.4, h2h: 0.45, form: 0.55 },
+  weights: { strength: 0.6, elo: 0.85, h2h: 0.35, form: 0.4 },
   homeAdvantage: {
     football: 0.28,
     basketball: 0.3,
@@ -199,7 +199,7 @@ export const MODEL: ModelConfig = {
   h2hPrior: 2,
   formWindow: 8,
   formPrior: 3,
-  temperature: 0.9,
+  temperature: 0.95,
   clamp: [0.03, 0.97],
   elo: { initial: 1500, k: 24, kTennis: 32, surfaceBlend: 0.6, homeAdvantagePoints: 55, scale: 400 },
   minComponents: 1,

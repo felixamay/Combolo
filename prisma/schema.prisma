@@ -41,7 +41,8 @@ enum ComboStrategy {
 
 enum ComboStatus {
   ACTIVE
-  EXPIRED
+  SUPERSEDED
+  LOCKED
   WON
   LOST
   VOID
