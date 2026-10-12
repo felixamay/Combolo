@@ -15,6 +15,7 @@ export interface UpsertStats {
 }
 
 const HOUR = 3600_000;
+const SACKMANN_SPAN = 15 * 24 * HOUR;
 
 function tourFromLeague(f: NormFixture): string | null {
   if (f.league.tour) return f.league.tour.toUpperCase();
@@ -45,15 +46,19 @@ export async function findExistingMatch(resolver: Resolver, f: NormFixture, ids:
   const window = ids.individual ? 18 * HOUR : 4 * HOUR;
   const homeField = ids.individual ? "homePlayerId" : "homeTeamId";
   const awayField = ids.individual ? "awayPlayerId" : "awayTeamId";
+  const pair = [
+    { [homeField]: ids.home, [awayField]: ids.away },
+    { [homeField]: ids.away, [awayField]: ids.home },
+  ];
+  const close = await prisma.match.findFirst({
+    where: { sportId: f.sport, startsAt: { gte: new Date(f.startsAt.getTime() - window), lte: new Date(f.startsAt.getTime() + window) }, OR: pair },
+    orderBy: { startsAt: "asc" },
+  });
+  if (close || !ids.individual || f.status !== "FINISHED" || f.provider === "sackmann") return close;
+  // Sackmann rows only know the tournament start date, so their kick-off time is approximate: a result from a
+  // time-accurate provider for the same pair within the tournament span is the same match, not a new one.
   return prisma.match.findFirst({
-    where: {
-      sportId: f.sport,
-      startsAt: { gte: new Date(f.startsAt.getTime() - window), lte: new Date(f.startsAt.getTime() + window) },
-      OR: [
-        { [homeField]: ids.home, [awayField]: ids.away },
-        { [homeField]: ids.away, [awayField]: ids.home },
-      ],
-    },
+    where: { sportId: f.sport, primarySource: "sackmann", startsAt: { gte: new Date(f.startsAt.getTime() - SACKMANN_SPAN), lte: new Date(f.startsAt.getTime() + SACKMANN_SPAN) }, OR: pair },
     orderBy: { startsAt: "asc" },
   });
 }
@@ -148,6 +153,9 @@ export async function upsertFixtures(fixtures: NormFixture[], resolver = new Res
         data.winner = inWinner;
         data.homeScore = inHome ?? existing.homeScore;
         data.awayScore = inAway ?? existing.awayScore;
+      }
+      if (existing.primarySource === "sackmann" && f.provider !== "sackmann" && f.status === "FINISHED") {
+        data.startsAt = f.startsAt;
       }
       if (!existing.surface && f.surface) data.surface = f.surface;
       if (!existing.homeLogo && f.home.logo) data.homeLogo = swapped ? undefined : f.home.logo;

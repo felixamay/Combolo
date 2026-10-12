@@ -12,8 +12,47 @@ export function normName(name: string): string {
   return (tokens.length ? tokens : s.split(" ")).join(" ");
 }
 
+const DEMONYMS: Record<string, string> = {
+  english: "england", spanish: "spain", german: "germany", italian: "italy", french: "france", dutch: "netherlands", portuguese: "portugal",
+  scottish: "scotland", turkish: "turkey", belgian: "belgium", russian: "russia", brazilian: "brazil", argentine: "argentina", argentinian: "argentina",
+  mexican: "mexico", american: "usa", australian: "australia", japanese: "japan", swiss: "switzerland", austrian: "austria", greek: "greece",
+  danish: "denmark", swedish: "sweden", norwegian: "norway", polish: "poland", czech: "czechia", ukrainian: "ukraine", chinese: "china", korean: "south korea",
+  irish: "ireland", welsh: "wales", croatian: "croatia", serbian: "serbia", hungarian: "hungary", romanian: "romania", finnish: "finland", canadian: "canada",
+};
+
+const COUNTRY_ALIASES: Record<string, string> = { "united states": "usa", "united states of america": "usa", us: "usa", "united kingdom": "uk", "korea republic": "south korea", "czech republic": "czechia", holland: "netherlands" };
+
+export function normCountry(country: string | null | undefined): string | null {
+  if (!country) return null;
+  const c = stripDiacritics(country).toLowerCase().replace(/[^a-z\s]/g, " ").replace(/\s+/g, " ").trim();
+  if (!c || c === "world" || c === "international") return null;
+  return COUNTRY_ALIASES[c] ?? c;
+}
+
 export function normLeagueName(name: string): string {
-  return normName(name.replace(/\b(uefa|the)\b/gi, " "));
+  return normName(name.replace(/\b(uefa|the|efl)\b/gi, " "));
+}
+
+/**
+ * League identity used to merge the same competition across providers: the normalised name without a leading
+ * demonym ("English Premier League" -> "premier league" + england), plus the country when known. Without the
+ * country, "Premier League" in England and in Russia would be merged.
+ */
+export function leagueIdentity(name: string, country: string | null | undefined, aliases: Record<string, string> = {}): { base: string; country: string | null } {
+  let base = normLeagueName(name);
+  let c = normCountry(country);
+  const tokens = base.split(" ");
+  if (tokens.length > 1 && DEMONYMS[tokens[0]]) {
+    c = c ?? DEMONYMS[tokens[0]];
+    base = tokens.slice(1).join(" ");
+  }
+  const aliasKey = c ? `${base}@${c}` : base;
+  const aliased = aliases[aliasKey];
+  if (aliased) {
+    const [b, ac] = aliased.split("@");
+    return { base: b, country: ac ?? c };
+  }
+  return { base, country: c };
 }
 
 /**

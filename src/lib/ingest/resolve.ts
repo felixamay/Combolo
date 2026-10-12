@@ -1,10 +1,10 @@
 import type { EntityType, Prisma } from "@prisma/client";
 import { prisma } from "../db";
 import type { NormLeague, NormParticipant } from "../providers/types";
-import { leaguePriority } from "../../../config/admin";
+import { LEAGUE_ALIASES, leaguePriority } from "../../../config/admin";
 import type { ProviderId } from "../quota/rules";
 import type { SportId } from "../sports";
-import { normLeagueName, normName, playerKey } from "./names";
+import { leagueIdentity, normName, playerKey } from "./names";
 
 /** Cross-provider entity resolution: provider IDs -> one internal entity. */
 export class Resolver {
@@ -43,12 +43,25 @@ export class Resolver {
       }
       return existing;
     }
-    const key = `${normLeagueName(l.name)}${l.tour ? `|${l.tour.toLowerCase()}` : ""}`;
-    const row = await prisma.league.upsert({
-      where: { sportId_key: { sportId: sport, key } },
-      create: { sportId: sport, key, name: l.name, country: l.country ?? null, tour: l.tour ?? null, logo: l.logo ?? null, priority: leaguePriority(sport, l.name, l.country) },
-      update: { ...(l.logo ? { logo: l.logo } : {}), ...(l.country ? { country: l.country } : {}) },
+    const id = leagueIdentity(l.name, l.country, LEAGUE_ALIASES);
+    const tourPart = l.tour ? `|${l.tour.toLowerCase()}` : "";
+    const key = `${id.base}${id.country ? `@${id.country}` : ""}${tourPart}`;
+    const plainKey = `${id.base}${tourPart}`;
+    const patch = { ...(l.logo ? { logo: l.logo } : {}), ...(l.country ? { country: l.country } : {}) };
+    let row = await prisma.league.findUnique({ where: { sportId_key: { sportId: sport, key } } });
+    if (!row && id.country) {
+      // An earlier provider may have created the league before the country was known: adopt it.
+      const bare = await prisma.league.findUnique({ where: { sportId_key: { sportId: sport, key: plainKey } } });
+      if (bare) row = await prisma.league.update({ where: { id: bare.id }, data: { key, ...patch } });
+    } else if (!row) {
+      // No country known: reuse a country-qualified league only when the name identifies exactly one.
+      const candidates = await prisma.league.findMany({ where: { sportId: sport, key: { startsWith: `${id.base}@` }, ...(l.tour ? { tour: l.tour } : {}) }, take: 2 });
+      if (candidates.length === 1) row = candidates[0];
+    }
+    row ??= await prisma.league.create({
+      data: { sportId: sport, key, name: l.name, country: l.country ?? null, tour: l.tour ?? null, logo: l.logo ?? null, priority: leaguePriority(sport, l.name, l.country) },
     });
+    if (Object.keys(patch).length && row.country == null) row = await prisma.league.update({ where: { id: row.id }, data: patch });
     await this.linkExternal(provider, scope, "LEAGUE", l.externalId, row.id);
     return row.id;
   }

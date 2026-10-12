@@ -85,7 +85,7 @@ export default async function AboutModelPage() {
       <section className="space-y-3" aria-labelledby="bt-h" data-testid="backtest">
         <h2 id="bt-h" className="text-lg font-semibold">Measured accuracy (walk-forward back-test)</h2>
         <p className="text-sm">
-          For each sport, stored finished matches are replayed in date order. Each match is predicted using only Elo, form and head-to-head built from <em>earlier</em> matches, then compared with what happened. Standings are not back-tested because historical league tables are not stored, so live picks (which also use standings) may differ from these figures. The baseline is always picking the most common result.
+          For each sport, stored finished matches are replayed in date order. Each match is predicted using only Elo, form and head-to-head built from <em>earlier</em> matches, then compared with what happened. Standings are not back-tested because historical league tables are not stored, so live picks (which also use standings) may differ from these figures. The baseline is always picking the most common result. Brier is the sum of squared errors over the home/draw/away outcomes (lower is better; a coin flip between two outcomes scores 0.5), log loss is the average negative log of the probability given to what happened.
         </p>
         {results.length === 0 ? (
           <Empty>

@@ -120,6 +120,18 @@ export const HIGHLIGHTLY_PRODUCTS: HighlightlyProduct[] = [
   { scope: "handball", sport: "handball", host: "handball.highlightly.net", standingsBudget: 10, h2hBudget: 40 },
 ];
 
+/**
+ * League aliases used when merging the same competition across providers
+ * ("<normalised name>@<country>" -> canonical "<name>@<country>"). Add entries when two providers name one league differently.
+ */
+export const LEAGUE_ALIASES: Record<string, string> = {
+  "primera division@spain": "la liga@spain",
+  "laliga@spain": "la liga@spain",
+  "campeonato brasileiro serie a@brazil": "serie a@brazil",
+  "brasileirao@brazil": "serie a@brazil",
+  "ligue 1 mcdonalds@france": "ligue 1@france",
+};
+
 /** The 12 competitions of football-data.org's free tier. */
 export const FOOTBALL_DATA_FREE_COMPETITIONS = ["WC", "CL", "BL1", "DED", "BSA", "PD", "FL1", "ELC", "PPL", "EC", "SA", "PL"] as const;
 

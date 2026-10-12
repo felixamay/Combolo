@@ -20,7 +20,10 @@
     "setup": "tsx scripts/setup.ts",
     "job": "tsx scripts/run-job.ts",
     "worker": "tsx scripts/worker.ts",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "test:integration": "vitest run -c vitest.integration.config.mts",
+    "test:all": "vitest run && vitest run -c vitest.integration.config.mts",
+    "seed:test": "tsx tests/support/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "6.19.3",
