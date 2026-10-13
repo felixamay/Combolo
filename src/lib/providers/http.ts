@@ -46,6 +46,11 @@ export interface CallOptions<T> {
   endpoint: string;
   query?: Record<string, string | number | undefined>;
   headers?: Record<string, string>;
+  /** HTTP method (default GET). A `body` is sent as JSON. */
+  method?: "GET" | "POST" | "PUT";
+  body?: unknown;
+  /** Per-request auth headers computed at send time (after any quota wait), e.g. timestamped signatures. */
+  signHeaders?: (method: string, url: URL) => Record<string, string>;
   schema: ZodType<T>;
   cost?: number;
   /** Max time (ms) to sleep when only the rolling per-minute window blocks the call. */
@@ -130,7 +135,10 @@ export async function callProvider<T>(opts: CallOptions<T>): Promise<CallResult<
     const timer = setTimeout(() => ctrl.abort(), opts.timeoutMs ?? 25000);
     let response: Response;
     try {
-      response = await fetch(url, { headers: { accept: "application/json", ...opts.headers }, signal: ctrl.signal });
+      const method = opts.method ?? "GET";
+      const body = opts.body === undefined ? undefined : JSON.stringify(opts.body);
+      const headers: Record<string, string> = { accept: "application/json", ...(body ? { "content-type": "application/json" } : {}), ...opts.headers, ...opts.signHeaders?.(method, url) };
+      response = await fetch(url, { method, headers, body, signal: ctrl.signal });
     } finally {
       clearTimeout(timer);
     }

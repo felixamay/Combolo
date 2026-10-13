@@ -8,6 +8,7 @@ export interface FilterValues {
   minConf?: string;
   size?: string;
   strategy: string;
+  kalshi: boolean;
 }
 
 export function ComboFilters({ values, leagues }: { values: FilterValues; leagues: Array<{ id: string; name: string; sportId: string }> }) {
@@ -74,6 +75,10 @@ export function ComboFilters({ values, leagues }: { values: FilterValues; league
               <option value="TOP">Top probability</option>
               <option value="DIVERSIFIED">Diversified (spread over sports/leagues)</option>
             </select>
+          </label>
+          <label className="flex items-center gap-1.5 text-sm">
+            <input type="checkbox" name="kalshi" value="1" defaultChecked={values.kalshi} data-testid="kalshi-only" />
+            Only games listed on Kalshi
           </label>
         </div>
       </div>

@@ -3,7 +3,7 @@ import type { QuotaBucket } from "./manager";
 import { QuotaManager } from "./manager";
 import { PrismaQuotaStore } from "./prisma-store";
 
-export type ProviderId = "apisports" | "footballdata" | "highlightly" | "thesportsdb" | "apitennis" | "livetennis" | "oddsapi" | "sackmann";
+export type ProviderId = "apisports" | "footballdata" | "highlightly" | "thesportsdb" | "apitennis" | "livetennis" | "oddsapi" | "sackmann" | "kalshi";
 
 /** Buckets (and rules) governing one provider/product. Built from env so limits are configurable. */
 export function bucketsFor(provider: ProviderId, scope: string): QuotaBucket[] {
@@ -59,6 +59,13 @@ export function bucketsFor(provider: ProviderId, scope: string): QuotaBucket[] {
           ],
         },
       ];
+    case "kalshi":
+      return scope === "create"
+        ? [
+            { key: "kalshi:create", rules: [{ window: "day", limit: env.KALSHI_DAILY_CREATE_LIMIT }] },
+            { key: "kalshi", rules: [{ window: "minute", limit: env.KALSHI_MINUTE_LIMIT }] },
+          ]
+        : [{ key: "kalshi", rules: [{ window: "minute", limit: env.KALSHI_MINUTE_LIMIT }] }];
     case "sackmann":
       return [{ key: "sackmann", rules: [{ window: "day", limit: 300 }, { window: "minute", limit: 30 }] }];
   }

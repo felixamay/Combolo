@@ -1,8 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { LegsTable } from "@/components/combo";
+import { KalshiSlip } from "@/components/KalshiSlip";
 import { RgNotice } from "@/components/RgNotice";
 import { CombinedProb, KickOff, PageTitle, SportBadge, StatusChip } from "@/components/ui";
+import { kalshiByMatch } from "@/lib/combos/service";
+import { getEnv } from "@/lib/env";
+import { kalshiSlipLegs } from "@/lib/kalshi/slip";
+import { kalshiCanCreate } from "@/lib/providers/kalshi";
 import { comboDetail } from "@/lib/queries";
 import { getTz } from "@/lib/request";
 import { SPORTS, type SportId } from "@/lib/sports";
@@ -21,6 +26,10 @@ export default async function ComboDetailPage({ params }: { params: Promise<{ id
   const lost = combo.legs.filter((l) => l.result === "LOST").length;
   const pending = combo.legs.filter((l) => l.result === "PENDING").length;
   const label = combo.sportId ? SPORTS[combo.sportId as SportId]?.name : "Mixed sports";
+  const kalshiMarkets = combo.status === "ACTIVE" && getEnv().FEATURE_KALSHI ? await kalshiByMatch(combo.legs.map((l) => l.matchId)) : null;
+  const kalshiLegs = kalshiMarkets
+    ? kalshiSlipLegs(combo.legs.map((l) => ({ matchId: l.matchId, pick: l.pick, homeName: l.match.homeName, awayName: l.match.awayName, kalshi: kalshiMarkets.get(l.matchId)?.[l.pick] ?? null })))
+    : [];
 
   return (
     <div className="space-y-5">
@@ -85,6 +94,17 @@ export default async function ComboDetailPage({ params }: { params: Promise<{ id
           result: l.result,
         }))}
       />
+      {kalshiMarkets && kalshiLegs.length === combo.legs.length ? (
+        <KalshiSlip legs={kalshiLegs} canCreate={kalshiCanCreate()} />
+      ) : kalshiMarkets ? (
+        <p className="card p-3 text-sm" data-testid="kalshi-partial">
+          {kalshiLegs.length} of {combo.legs.length} legs are listed on Kalshi, so this combo cannot be placed there as a whole.{" "}
+          <Link href={`/combos?kalshi=1&size=${combo.size}${combo.sportId ? `&sport=${combo.sportId}` : ""}&strategy=${combo.strategy}`} className="underline">
+            Build a {combo.size}-leg Kalshi-only combo
+          </Link>
+          .
+        </p>
+      ) : null}
       <RgNotice compact />
     </div>
   );

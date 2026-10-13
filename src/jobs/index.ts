@@ -6,6 +6,7 @@ import { ensureSports } from "../lib/seed";
 import { refreshFixtures } from "./fixtures";
 import { refreshForm } from "./form";
 import { refreshH2H } from "./h2h";
+import { refreshKalshi } from "./kalshi";
 import { type JobContext, type JobResult } from "./helpers";
 import { refreshOdds } from "./odds";
 import { backtestJob, refreshModel } from "./ratings";
@@ -23,7 +24,9 @@ async function resultsJob(ctx: JobContext): Promise<JobResult> {
   const res = await refreshFixtures(ctx, { daysBack: 2, resultsOnly: true });
   const locked = await expireStarted(ctx.now);
   const settled = await settleCombos(ctx.now);
-  return { summary: { ...res.summary, newlyLocked: locked, ...settled }, errors: res.errors };
+  // Kalshi prices move all day: refresh the links hourly (public data, no key, ~1 request per series).
+  const k = await refreshKalshi(ctx).catch((e: unknown) => ({ summary: { failed: e instanceof Error ? e.message : String(e) }, errors: [`kalshi: ${e instanceof Error ? e.message : String(e)}`] }));
+  return { summary: { ...res.summary, newlyLocked: locked, ...settled, kalshi: k.summary }, errors: [...res.errors, ...k.errors] };
 }
 
 async function cleanupJob(ctx: JobContext): Promise<JobResult> {
@@ -61,6 +64,7 @@ const refreshSteps: Array<[string, JobFn]> = [
   ["form", refreshForm],
   ["model", refreshModel],
   ["odds", refreshOdds],
+  ["kalshi", refreshKalshi],
   ["combos", combosJob],
 ];
 
@@ -71,13 +75,14 @@ export const JOBS: Record<string, JobFn> = {
   form: refreshForm,
   model: refreshModel,
   odds: refreshOdds,
+  kalshi: refreshKalshi,
   combos: combosJob,
   results: resultsJob,
   backtest: backtestJob,
   "tennis-history": loadSackmannHistory,
   "tennis-backfill": backfillApiTennis,
   cleanup: cleanupJob,
-  /** Full pipeline: fixtures -> standings -> H2H -> form -> model -> odds -> combos. Scheduled 4x/day. */
+  /** Full pipeline: fixtures -> standings -> H2H -> form -> model -> odds -> kalshi -> combos. Scheduled 4x/day. */
   refresh: (c) => runSteps(c, refreshSteps),
   /** First-run population: history first so the model has data, then the normal pipeline, with raised budgets. */
   bootstrap: (c) =>

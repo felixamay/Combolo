@@ -5,7 +5,7 @@ import { getEnv } from "../env";
 import { log } from "../log";
 import { SPORT_IDS, type SportId } from "../sports";
 import { getComboWindow } from "../time";
-import { buildCombo, comboSignature, validateCombo, type BuildRequest, type BuildResult, type BuiltCombo, type Candidate, type Strategy } from "./engine";
+import { buildCombo, comboSignature, validateCombo, type BuildRequest, type BuildResult, type BuiltCombo, type Candidate, type KalshiLeg, type Strategy } from "./engine";
 
 const DAY = 86400_000;
 
@@ -19,6 +19,19 @@ export async function bestOddsByMatch(matchIds: string[]): Promise<Map<string, P
     if (r.home && r.home > 1 && r.home > (cur.HOME ?? 0)) cur.HOME = r.home;
     if (r.draw && r.draw > 1 && r.draw > (cur.DRAW ?? 0)) cur.DRAW = r.draw;
     if (r.away && r.away > 1 && r.away > (cur.AWAY ?? 0)) cur.AWAY = r.away;
+    out.set(r.matchId, cur);
+  }
+  return out;
+}
+
+/** Kalshi market per match and side, as stored by the `kalshi` job. */
+export async function kalshiByMatch(matchIds: string[]): Promise<Map<string, Partial<Record<Side, KalshiLeg>>>> {
+  const out = new Map<string, Partial<Record<Side, KalshiLeg>>>();
+  if (matchIds.length === 0) return out;
+  const rows = await prisma.kalshiMarket.findMany({ where: { matchId: { in: matchIds } } });
+  for (const r of rows) {
+    const cur = out.get(r.matchId) ?? {};
+    cur[r.side] = { seriesTicker: r.seriesTicker, eventTicker: r.eventTicker, marketTicker: r.marketTicker, eventTitle: r.eventTitle, marketTitle: r.marketTitle, yesAsk: r.yesAsk };
     out.set(r.matchId, cur);
   }
   return out;
@@ -39,6 +52,7 @@ export async function loadCandidates(now: Date, horizonDays = 5): Promise<Candid
     include: { match: { include: { league: true } } },
   });
   const odds = getEnv().FEATURE_ODDS ? await bestOddsByMatch(rows.map((r) => r.matchId)) : new Map<string, Partial<Record<Side, number>>>();
+  const kalshi = getEnv().FEATURE_KALSHI ? await kalshiByMatch(rows.map((r) => r.matchId)) : new Map<string, Partial<Record<Side, KalshiLeg>>>();
   return rows.map((r) => ({
     matchId: r.matchId,
     sport: r.match.sportId as SportId,
@@ -50,6 +64,7 @@ export async function loadCandidates(now: Date, horizonDays = 5): Promise<Candid
     odds: odds.get(r.matchId)?.[r.pick as Side] ?? null,
     homeName: r.match.homeName,
     awayName: r.match.awayName,
+    kalshi: kalshi.get(r.matchId)?.[r.pick as Side] ?? null,
   }));
 }
 

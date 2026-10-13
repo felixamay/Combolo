@@ -45,7 +45,7 @@ loads TheSportsDB schedules (names/times, no standings or H2H), so it correctly 
 combos – combos need at least standings, ratings or form on both sides of a match.
 
 Run any single job: `npm run job -- <name>` where `<name>` is one of
-`refresh results fixtures standings h2h form model odds combos backtest tennis-history tennis-backfill cleanup bootstrap`.
+`refresh results fixtures standings h2h form model odds kalshi combos backtest tennis-history tennis-backfill cleanup bootstrap`.
 
 ## Provider keys – where to get them
 
@@ -58,6 +58,7 @@ Run any single job: `npm run job -- <name>` where `<name>` is one of
 | API-Tennis | tennis fixtures/results (history backfill), rankings, H2H, odds | https://api-tennis.com | ~1,000 requests/month → daily budget `API_TENNIS_DAILY_BUDGET=30`. `API_TENNIS_KEY` |
 | Live Tennis API | tennis fixtures, surfaces, player rankings | https://livetennisapi.com | 100/day, 30/min. `LIVE_TENNIS_API_KEY` |
 | Jeff Sackmann CSVs | tennis history (optional) | no key | CC BY-NC-SA 4.0 – **non-commercial only**; see below |
+| Kalshi | game-winner market prices and combo (multivariate) markets | public data: no key. Creating combos: API key from kalshi.com → Account & security | combo creation is capped by Kalshi at 5,000/week → `KALSHI_DAILY_CREATE_LIMIT=600`. `KALSHI_API_KEY_ID`, `KALSHI_PRIVATE_KEY` |
 | The Odds API (optional) | bookmaker odds, only with `FEATURE_ODDS=true` | https://the-odds-api.com | 500 credits/month → `ODDS_API_DAILY_BUDGET=15`. `ODDS_API_KEY` |
 
 Every limit is configurable in `.env`; the values above are the documented/reported free-tier numbers at the time of writing
@@ -83,8 +84,8 @@ Defined once in `config/schedule.ts` (UTC):
 
 | Job | Schedule | What it does |
 |-----|----------|--------------|
-| `refresh` | every 6 h (4×/day) | fixtures → standings/rankings → H2H → form gap fill → Elo/form/predictions → odds → regenerate combos |
-| `results` | hourly (:20) | football-data + API-Tennis results, lock combos whose first match started, settle legs/combos |
+| `refresh` | every 6 h (4×/day) | fixtures → standings/rankings → H2H → form gap fill → Elo/form/predictions → odds → Kalshi links → regenerate combos |
+| `results` | hourly (:20) | football-data + API-Tennis results, lock combos whose first match started, settle legs/combos, refresh Kalshi prices |
 | `tennis-backfill` | daily 03:30 | resumable API-Tennis history backfill (a few calls per run) |
 | `tennis-history` | weekly | Sackmann CSV refresh (no-op in commercial mode or if the files are unavailable) |
 | `backtest` | weekly | walk-forward back-test shown on "About the model" |
@@ -119,6 +120,21 @@ Function duration: cron endpoints set `maxDuration = 300`; jobs stop at their de
 * **Important finding (12 Oct 2026):** `github.com/JeffSackmann/tennis_atp` and `tennis_wta` currently return HTTP 404. The importer is kept
   and configurable (`SACKMANN_*_BASE_URL`, e.g. a mirror or fork) and logs the unavailability instead of failing, but with the default URLs
   tennis history comes from API-Tennis only (`TENNIS_BACKFILL_*`). `docs/INTEGRATION_PLAN.md` lists all provider findings.
+
+## Kalshi combos
+
+* The `kalshi` job (part of `refresh`, and of the hourly `results` run) reads Kalshi's sports combo collection
+  (`KALSHI_COLLECTION`) and the open game-winner events of every series in `config/admin.ts → KALSHI_SERIES`, then links each
+  event to one stored match by both participants' names and a plausible start time (`src/lib/ingest/kalshi-match.ts`). Kalshi
+  uses short names ("Los Angeles D", "Sporting CP"); a pairing is only accepted when both sides agree and exactly one match fits.
+  Links and YES prices are stored in `KalshiMarket` and replaced on every run.
+* `/combos` → **Only games listed on Kalshi** builds combos solely from linked legs and shows the Kalshi slip: the market for
+  each pick, its YES price, a **Copy combo** button and, when `KALSHI_API_KEY_ID` + private key are set, **Create on Kalshi**
+  (`POST /api/kalshi/combo`), which creates the combo market with the operator's key (signed RSA-PSS/Ed25519 requests) and shows
+  its ticker. Each exact set of legs is created once (`KalshiCombo`). Stored combo pages show the slip when every leg is listed.
+* The site never places trades: users review Kalshi's own quote and buy from their own account.
+* Kalshi covers NFL, NCAAF, NBA, WNBA, EuroLeague, NHL, MLB/KBO/NPB, major football leagues and ATP/WTA tennis — not rugby,
+  handball or volleyball. Kalshi's API exposes no title slug for event pages, so leg links open the series page.
 
 ## The model (`src/lib/model`, config in `config/admin.ts`)
 

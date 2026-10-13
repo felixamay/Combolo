@@ -238,3 +238,18 @@ describe("honest probability display", () => {
     expect(oneInN(0.6 ** 32)).toMatch(/million|billion|\d{1,3}(,\d{3})+/);
   });
 });
+
+describe("Kalshi-only combos", () => {
+  const k = (i: number) => ({ seriesTicker: "KXEPLGAME", eventTicker: `E${i}`, marketTicker: `E${i}-H`, eventTitle: `H${i} vs A${i}`, marketTitle: `H${i}`, yesAsk: 0.6 });
+
+  it("uses only legs with a Kalshi market when kalshiOnly is set", () => {
+    const cands = many(12).map((c, i) => ({ ...c, kalshi: i % 2 === 0 ? k(i) : null }));
+    const res = buildCombo(cands, req(7));
+    expect(res.ok).toBe(true);
+    const only = buildCombo(cands, req(7, { kalshiOnly: true }));
+    expect(only.ok).toBe(false);
+    if (!only.ok) expect(only.message).toBe("Only 6 eligible matches across all sports listed on Kalshi in the next 3 days – a 7-leg combo needs 7. Nothing was padded.");
+    const ok = buildCombo(many(9).map((c, i) => ({ ...c, kalshi: k(i) })), req(7, { kalshiOnly: true }));
+    expect(ok.ok && ok.legs.every((l) => l.kalshi)).toBe(true);
+  });
+});

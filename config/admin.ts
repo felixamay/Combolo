@@ -161,6 +161,52 @@ export const ODDS_API_SPORT_KEYS: Array<{ sport: SportId; keyPattern: string }> 
 ];
 
 /* ------------------------------------------------------------------------ */
+/* Kalshi                                                                    */
+/* ------------------------------------------------------------------------ */
+
+/**
+ * Kalshi game-winner series we link to our matches. Only series that also appear in the sports combo collection
+ * (KALSHI_COLLECTION) are fetched, so every linked market can go into a Kalshi combo. Props, spreads and totals
+ * are deliberately absent: our picks are match winners only.
+ */
+export const KALSHI_SERIES: Array<{ series: string; sport: SportId; tour?: "ATP" | "WTA" }> = [
+  { series: "KXEPLGAME", sport: "football" },
+  { series: "KXLALIGAGAME", sport: "football" },
+  { series: "KXSERIEAGAME", sport: "football" },
+  { series: "KXBUNDESLIGAGAME", sport: "football" },
+  { series: "KXLIGUE1GAME", sport: "football" },
+  { series: "KXUCLGAME", sport: "football" },
+  { series: "KXUELGAME", sport: "football" },
+  { series: "KXMLSGAME", sport: "football" },
+  { series: "KXEFLCHAMPIONSHIPGAME", sport: "football" },
+  { series: "KXLIGAMXGAME", sport: "football" },
+  { series: "KXBRASILEIROGAME", sport: "football" },
+  { series: "KXBRASILEIROBGAME", sport: "football" },
+  { series: "KXEREDIVISIEGAME", sport: "football" },
+  { series: "KXCONMEBOLSUDGAME", sport: "football" },
+  { series: "KXCONMEBOLLIBGAME", sport: "football" },
+  { series: "KXDIMAYORGAME", sport: "football" },
+  { series: "KXLIGAEXPGAME", sport: "football" },
+  { series: "KXEGYPLGAME", sport: "football" },
+  { series: "KXFIFAWGAME", sport: "football" },
+  { series: "KXNBAGAME", sport: "basketball" },
+  { series: "KXWNBAGAME", sport: "basketball" },
+  { series: "KXEUROLEAGUEGAME", sport: "basketball" },
+  { series: "KXNCAAMBGAME", sport: "basketball" },
+  { series: "KXLNBPGAME", sport: "basketball" },
+  { series: "KXNHLGAME", sport: "hockey" },
+  { series: "KXMLBGAME", sport: "baseball" },
+  { series: "KXKBOGAME", sport: "baseball" },
+  { series: "KXNPBGAME", sport: "baseball" },
+  { series: "KXNFLGAME", sport: "american-football" },
+  { series: "KXNCAAFGAME", sport: "american-football" },
+  { series: "KXATPMATCH", sport: "tennis", tour: "ATP" },
+  { series: "KXATPCHALLENGERMATCH", sport: "tennis", tour: "ATP" },
+  { series: "KXWTAMATCH", sport: "tennis", tour: "WTA" },
+  { series: "KXWTACHALLENGERMATCH", sport: "tennis", tour: "WTA" },
+];
+
+/* ------------------------------------------------------------------------ */
 /* Prediction model                                                          */
 /* ------------------------------------------------------------------------ */
 
@@ -248,5 +294,6 @@ export const ATTRIBUTIONS = [
   { id: "thesportsdb", name: "TheSportsDB", url: "https://www.thesportsdb.com", licence: "Provider terms / CC BY-NC", note: "Team names, badges and schedules." },
   { id: "apitennis", name: "API-Tennis.com", url: "https://api-tennis.com", licence: "Provider terms", note: "Tennis results, rankings and odds." },
   { id: "livetennis", name: "Live Tennis API", url: "https://livetennisapi.com", licence: "Provider terms", note: "Tennis fixtures, surfaces and player rankings." },
+  { id: "kalshi", name: "Kalshi", url: "https://kalshi.com", licence: "Provider terms", note: "Game-winner market prices and combo (multivariate) markets. Public market data needs no key; creating combos uses the operator's API key." },
   { id: "oddsapi", name: "The Odds API", url: "https://the-odds-api.com", licence: "Provider terms", note: "Bookmaker odds (only when enabled)." },
 ];

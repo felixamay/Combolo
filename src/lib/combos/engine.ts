@@ -14,6 +14,16 @@ import { dayIndexOf, getComboWindow, isInWindow, type ComboWindow } from "../tim
 export type PickSide = "HOME" | "DRAW" | "AWAY";
 export type Strategy = "TOP" | "DIVERSIFIED";
 
+/** The Kalshi market for this leg's pick (stored by the `kalshi` job); absent when Kalshi does not list it. */
+export interface KalshiLeg {
+  seriesTicker: string;
+  eventTicker: string;
+  marketTicker: string;
+  eventTitle: string;
+  marketTitle: string;
+  yesAsk: number | null;
+}
+
 export interface Candidate {
   matchId: string;
   sport: SportId;
@@ -25,6 +35,7 @@ export interface Candidate {
   odds?: number | null;
   homeName: string;
   awayName: string;
+  kalshi?: KalshiLeg | null;
 }
 
 export interface BuildRequest {
@@ -37,6 +48,8 @@ export interface BuildRequest {
   days?: Array<1 | 2 | 3>;
   /** Minimum per-leg probability (0..1). */
   minConfidence?: number;
+  /** Only legs whose pick has a Kalshi market, so the whole combo can be placed on Kalshi. */
+  kalshiOnly?: boolean;
 }
 
 export interface BuiltCombo {
@@ -67,7 +80,7 @@ export function isValidSize(n: number): boolean {
 }
 
 /** Candidates that satisfy window, filters and the one-leg-per-match rule (best probability kept per match). */
-export function filterEligible(cands: Candidate[], req: globalThis.Pick<BuildRequest, "now" | "tz" | "sports" | "leagueIds" | "days" | "minConfidence">): Candidate[] {
+export function filterEligible(cands: Candidate[], req: globalThis.Pick<BuildRequest, "now" | "tz" | "sports" | "leagueIds" | "days" | "minConfidence" | "kalshiOnly">): Candidate[] {
   const window = getComboWindow(req.now, req.tz);
   const best = new Map<string, Candidate>();
   for (const c of cands) {
@@ -80,6 +93,7 @@ export function filterEligible(cands: Candidate[], req: globalThis.Pick<BuildReq
       if (!d || !req.days.includes(d)) continue;
     }
     if (req.minConfidence !== undefined && c.prob < req.minConfidence) continue;
+    if (req.kalshiOnly && !c.kalshi) continue;
     const prev = best.get(c.matchId);
     if (!prev || c.prob > prev.prob) best.set(c.matchId, c);
   }
@@ -122,11 +136,11 @@ function pickDiversified(sorted: Candidate[], size: number): Candidate[] {
   return chosen;
 }
 
-export function insufficientMessage(eligible: number, size: number, sports: SportId[] | undefined, days: Array<1 | 2 | 3> | undefined): string {
+export function insufficientMessage(eligible: number, size: number, sports: SportId[] | undefined, days: Array<1 | 2 | 3> | undefined, kalshiOnly = false): string {
   const scope = sports && sports.length === 1 ? SPORTS[sports[0]].pluralLabel : sports && sports.length > 1 ? "matches in the selected sports" : "matches across all sports";
   const eligibleLabel = eligible === 1 ? "eligible" : "eligible";
   const when = days && days.length && days.length < 3 ? `on day ${days.join(", ")}` : "in the next 3 days";
-  return `Only ${eligible} ${eligibleLabel} ${scope} ${when} – a ${size}-leg combo needs ${size}. Nothing was padded.`;
+  return `Only ${eligible} ${eligibleLabel} ${scope}${kalshiOnly ? " listed on Kalshi" : ""} ${when} – a ${size}-leg combo needs ${size}. Nothing was padded.`;
 }
 
 export function buildCombo(cands: Candidate[], req: BuildRequest): BuildResult {
@@ -135,7 +149,7 @@ export function buildCombo(cands: Candidate[], req: BuildRequest): BuildResult {
   }
   const eligible = filterEligible(cands, req).sort(byProb);
   if (eligible.length < req.size) {
-    return { ok: false, reason: "INSUFFICIENT", eligibleCount: eligible.length, requested: req.size, message: insufficientMessage(eligible.length, req.size, req.sports, req.days) };
+    return { ok: false, reason: "INSUFFICIENT", eligibleCount: eligible.length, requested: req.size, message: insufficientMessage(eligible.length, req.size, req.sports, req.days, req.kalshiOnly) };
   }
   const legs = (req.strategy === "DIVERSIFIED" ? pickDiversified(eligible, req.size) : pickTop(eligible, req.size)).sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime() || b.prob - a.prob);
   return summarise(legs, req, eligible.length);

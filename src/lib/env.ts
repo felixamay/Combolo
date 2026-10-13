@@ -48,6 +48,17 @@ const schema = z.object({
   ODDS_API_DAILY_BUDGET: z.coerce.number().int().positive().default(15),
   ODDS_API_REGIONS: z.string().default("us,eu"),
 
+  FEATURE_KALSHI: bool(true),
+  KALSHI_API_BASE: z.string().default("https://api.elections.kalshi.com/trade-api/v2"),
+  KALSHI_COLLECTION: z.string().default("KXMVESPORTSMULTIGAMEEXTENDED-R"),
+  KALSHI_API_KEY_ID: optStr,
+  /** PEM text (literal "\n" sequences are accepted) – or use KALSHI_PRIVATE_KEY_PATH. */
+  KALSHI_PRIVATE_KEY: optStr,
+  KALSHI_PRIVATE_KEY_PATH: optStr,
+  KALSHI_MINUTE_LIMIT: z.coerce.number().int().positive().default(300),
+  /** Kalshi allows 5,000 combo creations per week per user; this keeps a daily share of that. */
+  KALSHI_DAILY_CREATE_LIMIT: z.coerce.number().int().positive().default(600),
+
   AGE_GATE_ENABLED: bool(true),
   AGE_GATE_MIN_AGE: z.coerce.number().int().min(18).max(25).default(18),
   CRON_SECRET: optStr,
