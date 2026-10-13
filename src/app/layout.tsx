@@ -3,6 +3,8 @@ import type { ReactNode } from "react";
 import { AgeGate } from "@/components/AgeGate";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
+import { authEnabled } from "@/lib/auth/firebase-admin";
+import { currentUser } from "@/lib/auth/session";
 import { getEnv } from "@/lib/env";
 import { ageGateRequired, getTz } from "@/lib/request";
 import "./globals.css";
@@ -22,6 +24,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   const env = getEnv();
   const tz = await getTz();
   const gate = await ageGateRequired();
+  const user = authEnabled() ? await currentUser() : false;
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -29,7 +32,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       </head>
       <body className="min-h-screen">
         {gate ? <AgeGate minAge={env.AGE_GATE_MIN_AGE} siteName={env.SITE_NAME} /> : null}
-        <Header tz={tz} />
+        <Header tz={tz} user={user ? { label: user.name ?? user.email ?? "Signed in" } : user} />
         <main className="mx-auto max-w-6xl px-4 py-6">{children}</main>
         <Footer />
       </body>

@@ -59,6 +59,17 @@ const schema = z.object({
   /** Kalshi allows 5,000 combo creations per week per user; this keeps a daily share of that. */
   KALSHI_DAILY_CREATE_LIMIT: z.coerce.number().int().positive().default(600),
 
+  /** Firebase Admin (server). Project id falls back to NEXT_PUBLIC_FIREBASE_PROJECT_ID. */
+  FIREBASE_PROJECT_ID: optStr,
+  FIREBASE_CLIENT_EMAIL: optStr,
+  /** Service-account private key PEM (literal "\n" accepted) – or FIREBASE_SERVICE_ACCOUNT_PATH to the JSON file. */
+  FIREBASE_PRIVATE_KEY: optStr,
+  FIREBASE_SERVICE_ACCOUNT_PATH: optStr,
+  NEXT_PUBLIC_FIREBASE_API_KEY: optStr,
+  NEXT_PUBLIC_FIREBASE_PROJECT_ID: optStr,
+  FIREBASE_AUTH_EMULATOR_HOST: optStr,
+  SESSION_DAYS: z.coerce.number().int().min(1).max(14).default(14),
+
   AGE_GATE_ENABLED: bool(true),
   AGE_GATE_MIN_AGE: z.coerce.number().int().min(18).max(25).default(18),
   CRON_SECRET: optStr,

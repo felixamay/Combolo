@@ -8,7 +8,7 @@ import { CombinedProb, FreshnessBar, PageTitle, SportBadge } from "@/components/
 import { buildLive } from "@/lib/combos/service";
 import { activeCombos, getFreshness, leaguesWithUpcoming } from "@/lib/queries";
 import { kalshiCanCreate } from "@/lib/providers/kalshi";
-import { kalshiSlipLegs } from "@/lib/kalshi/slip";
+import { kalshiSignInHref, kalshiSlipLegs } from "@/lib/kalshi/slip";
 import { getTz, list, single } from "@/lib/request";
 import { SPORTS, SPORT_IDS, type SportId } from "@/lib/sports";
 
@@ -43,6 +43,8 @@ export default async function CombosPage({ searchParams }: { searchParams: Promi
       })
     : null;
   const mixed = filtered ? [] : await activeCombos({ sport: null });
+  const qs = new URLSearchParams(Object.entries(sp).flatMap(([k, v]) => (Array.isArray(v) ? v.map((x) => [k, x]) : v ? [[k, v]] : [])));
+  const signInHref = kalshiOnly ? await kalshiSignInHref(`/combos?${qs}`) : undefined;
 
   return (
     <div className="space-y-6">
@@ -70,7 +72,7 @@ export default async function CombosPage({ searchParams }: { searchParams: Promi
               <CombinedProb p={live.combinedProb} odds={live.combinedOdds} priced={live.legsPriced} size={live.size} large />
             </div>
             <LegsTable legs={live.legs} tz={tz} window={live.window} />
-            {kalshiOnly ? <KalshiSlip legs={kalshiSlipLegs(live.legs)} canCreate={kalshiCanCreate()} /> : null}
+            {kalshiOnly ? <KalshiSlip legs={kalshiSlipLegs(live.legs)} canCreate={kalshiCanCreate()} signInHref={signInHref} /> : null}
             <RgNotice compact />
           </section>
         ) : (

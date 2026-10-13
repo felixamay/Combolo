@@ -37,7 +37,8 @@ async function copy(text: string): Promise<boolean> {
  * Every leg of a combo mapped to its Kalshi game-winner market, a copyable slip, and (when the operator configured
  * a Kalshi API key) a button that creates the combo market on Kalshi so the user can trade it from their own account.
  */
-export function KalshiSlip({ legs, canCreate }: { legs: KalshiSlipLeg[]; canCreate: boolean }) {
+/** `canCreate`: Kalshi key configured. `signInHref`: set when sign-in is required first (creation is then hidden behind it). */
+export function KalshiSlip({ legs, canCreate, signInHref }: { legs: KalshiSlipLeg[]; canCreate: boolean; signInHref?: string }) {
   const [copied, setCopied] = useState<"slip" | "ticker" | "failed" | null>(null);
   const [busy, setBusy] = useState(false);
   const [created, setCreated] = useState<Created | null>(null);
@@ -80,7 +81,11 @@ export function KalshiSlip({ legs, canCreate }: { legs: KalshiSlipLeg[]; canCrea
           <button type="button" className="btn" onClick={() => onCopy("slip", slipText(legs))} data-testid="kalshi-copy">
             {copied === "slip" ? "Copied" : "Copy combo"}
           </button>
-          {canCreate ? (
+          {canCreate && signInHref ? (
+            <a className="btn btn-primary" href={signInHref} data-testid="kalshi-sign-in">
+              Sign in to create on Kalshi
+            </a>
+          ) : canCreate ? (
             <button type="button" className="btn btn-primary" onClick={onCreate} disabled={busy || !!created} data-testid="kalshi-create">
               {busy ? "Creating…" : created ? "Created on Kalshi" : "Create on Kalshi"}
             </button>

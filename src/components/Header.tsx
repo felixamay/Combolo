@@ -3,6 +3,7 @@ import { SPORTS } from "@/lib/sports";
 import { getEnv } from "@/lib/env";
 import { TIMEZONE_OPTIONS } from "@/lib/timezones";
 import { ThemeToggle } from "./ThemeToggle";
+import { SignOutButton } from "./UserMenu";
 import { TimezoneSelect } from "./TimezoneSelect";
 
 const nav = [
@@ -13,7 +14,7 @@ const nav = [
   { href: "/about-model", label: "Model" },
 ];
 
-export function Header({ tz }: { tz: string }) {
+export function Header({ tz, user }: { tz: string; user?: { label: string } | null | false }) {
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-950/90">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
@@ -30,6 +31,18 @@ export function Header({ tz }: { tz: string }) {
         <div className="ml-auto flex items-center gap-2">
           <TimezoneSelect current={tz} options={TIMEZONE_OPTIONS} />
           <ThemeToggle />
+          {user ? (
+            <>
+              <span className="max-w-[12rem] truncate text-sm muted" data-testid="user-label">
+                {user.label}
+              </span>
+              <SignOutButton />
+            </>
+          ) : user === null ? (
+            <Link href="/login" className="btn" data-testid="sign-in">
+              Sign in
+            </Link>
+          ) : null}
         </div>
       </div>
       <nav aria-label="Sports" className="border-t border-slate-100 dark:border-slate-900">

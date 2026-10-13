@@ -6,7 +6,7 @@ import { RgNotice } from "@/components/RgNotice";
 import { CombinedProb, KickOff, PageTitle, SportBadge, StatusChip } from "@/components/ui";
 import { kalshiByMatch } from "@/lib/combos/service";
 import { getEnv } from "@/lib/env";
-import { kalshiSlipLegs } from "@/lib/kalshi/slip";
+import { kalshiSignInHref, kalshiSlipLegs } from "@/lib/kalshi/slip";
 import { kalshiCanCreate } from "@/lib/providers/kalshi";
 import { comboDetail } from "@/lib/queries";
 import { getTz } from "@/lib/request";
@@ -95,7 +95,7 @@ export default async function ComboDetailPage({ params }: { params: Promise<{ id
         }))}
       />
       {kalshiMarkets && kalshiLegs.length === combo.legs.length ? (
-        <KalshiSlip legs={kalshiLegs} canCreate={kalshiCanCreate()} />
+        <KalshiSlip legs={kalshiLegs} canCreate={kalshiCanCreate()} signInHref={await kalshiSignInHref(`/combos/${combo.id}`)} />
       ) : kalshiMarkets ? (
         <p className="card p-3 text-sm" data-testid="kalshi-partial">
           {kalshiLegs.length} of {combo.legs.length} legs are listed on Kalshi, so this combo cannot be placed there as a whole.{" "}

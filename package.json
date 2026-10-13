@@ -29,6 +29,8 @@
     "@prisma/client": "6.19.3",
     "csv-parse": "^7.0.2",
     "dotenv": "^17.2.3",
+    "firebase": "^12.19.0",
+    "firebase-admin": "^14.5.0",
     "next": "16.4.0",
     "node-cron": "^4.2.1",
     "react": "19.3.0",

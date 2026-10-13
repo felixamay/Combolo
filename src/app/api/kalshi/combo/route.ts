@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { authEnabled } from "@/lib/auth/firebase-admin";
+import { currentUser, sameOrigin } from "@/lib/auth/session";
 import { createKalshiCombo } from "@/lib/kalshi/combo";
 import { log } from "@/lib/log";
 import { QuotaDeniedError, ProviderHttpError } from "@/lib/providers/http";
@@ -12,10 +14,14 @@ const body = z.object({ legs: z.array(z.object({ matchId: z.string().min(1), pic
 /** Create the Kalshi combo market for a set of legs with the operator's API key. Users then trade it on Kalshi themselves. */
 export async function POST(req: Request) {
   if (!kalshiCanCreate()) return NextResponse.json({ error: "Creating combos on Kalshi is not configured on this site." }, { status: 503 });
+  if (!sameOrigin(req)) return NextResponse.json({ error: "Cross-site request refused." }, { status: 403 });
+  // Creation spends the operator's weekly Kalshi allowance, so it is reserved for signed-in users when sign-in is configured.
+  const user = authEnabled() ? await currentUser() : null;
+  if (authEnabled() && !user) return NextResponse.json({ error: "Sign in to create combos on Kalshi." }, { status: 401 });
   const parsed = body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   try {
-    const res = await createKalshiCombo(parsed.data.legs);
+    const res = await createKalshiCombo(parsed.data.legs, { userId: user?.id });
     if (!res.ok) return NextResponse.json({ error: res.message }, { status: res.status });
     return NextResponse.json(res);
   } catch (e) {

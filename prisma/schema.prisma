@@ -424,5 +424,19 @@ model KalshiCombo {
   marketTicker     String
   legTickers       String[]
   yesAsk           Float?
+  createdById      String?
+  createdBy        User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
   createdAt        DateTime @default(now())
+}
+
+/// A signed-in visitor. Identity lives in Firebase Auth; this row links it to app data.
+model User {
+  id           String        @id @default(cuid())
+  firebaseUid  String        @unique
+  email        String?
+  name         String?
+  photoUrl     String?
+  createdAt    DateTime      @default(now())
+  lastLoginAt  DateTime      @default(now())
+  kalshiCombos KalshiCombo[]
 }

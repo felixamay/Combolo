@@ -28,7 +28,8 @@ export interface KalshiComboError {
  * Create (or reuse) the Kalshi combo market for a set of legs. Every leg must have a stored Kalshi market for its
  * pick and must not have started; the same set of legs is only ever created once.
  */
-export async function createKalshiCombo(legs: KalshiComboRequestLeg[], now = new Date()): Promise<KalshiComboResult | KalshiComboError> {
+export async function createKalshiCombo(legs: KalshiComboRequestLeg[], opts: { userId?: string; now?: Date } = {}): Promise<KalshiComboResult | KalshiComboError> {
+  const now = opts.now ?? new Date();
   if (legs.length < COMBO.MIN_SIZE || legs.length > COMBO.MAX_SIZE) return { ok: false, status: 400, message: `A combo needs ${COMBO.MIN_SIZE}–${COMBO.MAX_SIZE} legs.` };
   if (new Set(legs.map((l) => l.matchId)).size !== legs.length) return { ok: false, status: 400, message: "Only one leg per match." };
 
@@ -50,7 +51,7 @@ export async function createKalshiCombo(legs: KalshiComboRequestLeg[], now = new
   const created = await createCombo(input, collection);
   await prisma.kalshiCombo.upsert({
     where: { legsKey: key },
-    create: { legsKey: key, collectionTicker: collection, eventTicker: created.eventTicker, marketTicker: created.marketTicker, legTickers: input.map((l) => l.marketTicker).sort(), yesAsk: created.yesAsk },
+    create: { legsKey: key, collectionTicker: collection, eventTicker: created.eventTicker, marketTicker: created.marketTicker, legTickers: input.map((l) => l.marketTicker).sort(), yesAsk: created.yesAsk, createdById: opts.userId ?? null },
     update: {},
   });
   return { ok: true, ...created, reused: false };

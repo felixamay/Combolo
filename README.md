@@ -3,7 +3,7 @@
 Multi-leg combo (accumulator / parlay) analysis built from **real** head-to-head statistics, standings/rankings and
 form across nine sports. It shows every number behind a pick and **takes no bets** – it is an informational tool.
 
-* Stack: Next.js 16 (App Router) · TypeScript · Tailwind 4 · PostgreSQL + Prisma 6 · node-cron / Vercel Cron · Zod · Vitest · Playwright
+* Stack: Next.js 16 (App Router) · TypeScript · Tailwind 4 · PostgreSQL + Prisma 6 · Firebase Auth (optional) · node-cron / Vercel Cron · Zod · Vitest · Playwright
 * No mock data anywhere in the production path. Test fixtures live only under `tests/`.
 * All page reads come from the database. Pages never call a provider; scheduled jobs do, through one quota manager.
 
@@ -135,6 +135,19 @@ Function duration: cron endpoints set `maxDuration = 300`; jobs stop at their de
 * The site never places trades: users review Kalshi's own quote and buy from their own account.
 * Kalshi covers NFL, NCAAF, NBA, WNBA, EuroLeague, NHL, MLB/KBO/NPB, major football leagues and ATP/WTA tennis — not rugby,
   handball or volleyball. Kalshi's API exposes no title slug for event pages, so leg links open the series page.
+
+## Sign-in (Firebase Auth)
+
+* Optional. With the `NEXT_PUBLIC_FIREBASE_*` web config and a service account (`FIREBASE_SERVICE_ACCOUNT_PATH`, or
+  `FIREBASE_CLIENT_EMAIL` + `FIREBASE_PRIVATE_KEY`) set, the header shows **Sign in** and `/login` offers Google and
+  email/password sign-in (with sign-up and password reset). Without them, the site runs exactly as before with no accounts.
+* The browser signs in with the Firebase JS SDK only to get an ID token; `POST /api/auth/session` verifies it with
+  Firebase Admin (fresh sign-ins only), sets an httpOnly `combolo_session` cookie (up to 14 days) and upserts a `User` row.
+  `DELETE /api/auth/session` revokes the user's sessions. Both routes refuse cross-site requests.
+* **Create on Kalshi** requires a signed-in user when sign-in is configured (it spends the operator's weekly Kalshi creation
+  allowance); browsing and copying combos stay public. Created Kalshi combos record who created them.
+* Local testing: run the Auth emulator and set `FIREBASE_AUTH_EMULATOR_HOST` / `NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST`
+  (see `.env.example`); no Firebase project or credentials are needed.
 
 ## The model (`src/lib/model`, config in `config/admin.ts`)
 
