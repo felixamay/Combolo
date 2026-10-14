@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { ATTRIBUTIONS } from "../../config/admin";
 
 async function passAgeGate(page: Page) {
   await page.context().addCookies([{ name: "combolo_age_ok", value: "1", url: "http://localhost:3100" }]);
@@ -160,7 +161,7 @@ test.describe("match, rankings, history, model", () => {
 
   test("data sources page attributes every provider", async ({ page }) => {
     await page.goto("/data-sources");
-    await expect(page.getByTestId("attribution")).toHaveCount(8);
+    await expect(page.getByTestId("attribution")).toHaveCount(ATTRIBUTIONS.length);
     await expect(page.getByText("CC BY-NC-SA 4.0").first()).toBeVisible();
   });
 
