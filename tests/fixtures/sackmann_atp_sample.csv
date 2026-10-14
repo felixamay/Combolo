@@ -1,0 +1,6 @@
+tourney_id,tourney_name,surface,draw_size,tourney_level,tourney_date,match_num,winner_id,winner_seed,winner_entry,winner_name,winner_hand,winner_ht,winner_ioc,winner_age,loser_id,loser_seed,loser_entry,loser_name,loser_hand,loser_ht,loser_ioc,loser_age,score,best_of,round,minutes
+2024-0001,Test Open,Hard,32,A,20240102,101,100001,1,,Adrian Vale,R,185,TST,25.0,100002,5,,Bruno Keller,L,180,TST,27.0,6-4 3-6 7-6(5),3,F,150
+2024-0001,Test Open,Hard,32,A,20240102,102,100003,,,Caleb Marsh,R,190,TST,24.0,100004,,,Diego Ferro,R,188,TST,29.0,6-0 6-2,3,SF,70
+2024-0002,Clay Classic,Clay,32,A,20240201,103,100002,2,,Bruno Keller,L,180,TST,27.0,100001,1,,Adrian Vale,R,185,TST,25.0,7-5 6-7(3) 6-4,3,QF,170
+2024-0002,Clay Classic,Clay,32,A,20240201,104,100003,,,Caleb Marsh,R,190,TST,24.0,100004,,,Diego Ferro,R,188,TST,29.0,W/O,3,R16,0
+2024-0002,Clay Classic,Clay,32,A,20240201,105,100004,,,Diego Ferro,R,188,TST,29.0,100003,,,Caleb Marsh,R,190,TST,24.0,6-3 2-1 RET,3,R32,50

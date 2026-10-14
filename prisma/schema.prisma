@@ -1,0 +1,442 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MatchStatus {
+  SCHEDULED
+  LIVE
+  FINISHED
+  POSTPONED
+  CANCELLED
+  ABANDONED
+}
+
+enum Side {
+  HOME
+  DRAW
+  AWAY
+}
+
+enum EntityType {
+  TEAM
+  PLAYER
+  LEAGUE
+  MATCH
+}
+
+enum ComboKind {
+  SINGLE_SPORT
+  MIXED
+}
+
+enum ComboStrategy {
+  TOP
+  DIVERSIFIED
+}
+
+enum ComboStatus {
+  ACTIVE
+  SUPERSEDED
+  LOCKED
+  WON
+  LOST
+  VOID
+}
+
+enum LegResult {
+  PENDING
+  WON
+  LOST
+  VOID
+}
+
+model Sport {
+  id        String   @id
+  name      String
+  hasDraw   Boolean  @default(false)
+  enabled   Boolean  @default(true)
+  leagues   League[]
+  teams     Team[]
+  players   Player[]
+  matches   Match[]
+}
+
+model League {
+  id         String    @id @default(cuid())
+  sportId    String
+  sport      Sport     @relation(fields: [sportId], references: [id])
+  key        String
+  name       String
+  country    String?
+  tour       String?
+  logo       String?
+  priority   Int       @default(0)
+  matches    Match[]
+  createdAt  DateTime  @default(now())
+
+  @@unique([sportId, key])
+  @@index([sportId, priority])
+}
+
+model Team {
+  id        String   @id @default(cuid())
+  sportId   String
+  sport     Sport    @relation(fields: [sportId], references: [id])
+  name      String
+  normName  String
+  logo      String?
+  country   String?
+  createdAt DateTime @default(now())
+
+  @@index([sportId, normName])
+}
+
+model Player {
+  id        String    @id @default(cuid())
+  sportId   String
+  sport     Sport     @relation(fields: [sportId], references: [id])
+  name      String
+  normKey   String
+  tour      String?
+  country   String?
+  hand      String?
+  birthDate DateTime?
+  photo     String?
+  createdAt DateTime  @default(now())
+
+  @@index([sportId, normKey])
+}
+
+/// Cross-provider ID mapping: the same team / player / league / match from different APIs resolves to one row.
+model ExternalId {
+  id         String     @id @default(cuid())
+  provider   String
+  scope      String
+  entityType EntityType
+  externalId String
+  entityId   String
+  createdAt  DateTime   @default(now())
+
+  @@unique([provider, scope, entityType, externalId])
+  @@index([entityType, entityId])
+}
+
+model Match {
+  id            String      @id @default(cuid())
+  sportId       String
+  sport         Sport       @relation(fields: [sportId], references: [id])
+  leagueId      String
+  league        League      @relation(fields: [leagueId], references: [id])
+  season        String?
+  round         String?
+  startsAt      DateTime
+  status        MatchStatus @default(SCHEDULED)
+  statusDetail  String?
+  homeTeamId    String?
+  awayTeamId    String?
+  homePlayerId  String?
+  awayPlayerId  String?
+  homeName      String
+  awayName      String
+  homeLogo      String?
+  awayLogo      String?
+  homeScore     Int?
+  awayScore     Int?
+  winner        Side?
+  surface       String?
+  neutralVenue  Boolean     @default(false)
+  bestOf        Int?
+  primarySource String
+  isHistorical  Boolean     @default(false)
+  lastSyncedAt  DateTime    @default(now())
+  createdAt     DateTime    @default(now())
+  prediction    Prediction?
+  odds          MatchOdds[]
+  legs          ComboLeg[]
+  kalshi        KalshiMarket[]
+
+  @@index([sportId, startsAt])
+  @@index([startsAt, status])
+  @@index([homeTeamId, awayTeamId])
+  @@index([homePlayerId, awayPlayerId])
+  @@index([leagueId, startsAt])
+}
+
+/// Standings (team sports) and rankings (tennis) snapshots.
+model RankingSnapshot {
+  id           String   @id @default(cuid())
+  sportId      String
+  scopeKey     String
+  leagueId     String?
+  entityType   EntityType
+  entityKey    String
+  name         String
+  logo         String?
+  groupName    String?
+  position     Int
+  points       Float?
+  played       Int?
+  wins         Int?
+  draws        Int?
+  losses       Int?
+  goalsFor     Int?
+  goalsAgainst Int?
+  homeRecord   Json?
+  awayRecord   Json?
+  form         String?
+  season       String?
+  source       String
+  snapshotDate DateTime
+  capturedAt   DateTime @default(now())
+
+  @@unique([scopeKey, entityKey, snapshotDate])
+  @@index([sportId, scopeKey, snapshotDate])
+  @@index([entityKey])
+}
+
+model H2HRecord {
+  id             String     @id @default(cuid())
+  sportId        String
+  entityType     EntityType
+  keyLow         String
+  keyHigh        String
+  meetings       Int        @default(0)
+  lowWins        Int        @default(0)
+  highWins       Int        @default(0)
+  draws          Int        @default(0)
+  lastMeetingAt  DateTime?
+  source         String
+  stale          Boolean    @default(false)
+  fetchedAt      DateTime   @default(now())
+
+  @@unique([sportId, keyLow, keyHigh])
+  @@index([stale, fetchedAt])
+}
+
+model FormSnapshot {
+  id         String   @id @default(cuid())
+  sportId    String
+  entityKey  String
+  results    String
+  sample     Int
+  details    Json
+  source     String
+  computedAt DateTime @default(now())
+
+  @@unique([sportId, entityKey])
+}
+
+model EloRating {
+  id        String   @id @default(cuid())
+  sportId   String
+  entityKey String
+  surface   String   @default("overall")
+  rating    Float
+  matches   Int      @default(0)
+  lastMatchAt DateTime?
+  updatedAt DateTime @updatedAt
+
+  @@unique([sportId, entityKey, surface])
+}
+
+model Prediction {
+  id           String   @id @default(cuid())
+  matchId      String   @unique
+  match        Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  modelVersion String
+  eligible     Boolean
+  reason       String?
+  pHome        Float?
+  pDraw        Float?
+  pAway        Float?
+  pick         Side?
+  pickProb     Float?
+  components   Json?
+  dataQuality  Json?
+  computedAt   DateTime @default(now())
+
+  @@index([eligible, pickProb])
+}
+
+model MatchOdds {
+  id        String   @id @default(cuid())
+  matchId   String
+  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  provider  String
+  bookmaker String
+  home      Float?
+  draw      Float?
+  away      Float?
+  fetchedAt DateTime @default(now())
+
+  @@unique([matchId, provider, bookmaker])
+}
+
+model Combo {
+  id             String        @id @default(cuid())
+  kind           ComboKind
+  sportId        String?
+  size           Int
+  requestedSize  Int
+  strategy       ComboStrategy
+  signature      String
+  combinedProb   Float
+  combinedOdds   Float?
+  legsPriced     Int           @default(0)
+  minLegProb     Float
+  timezone       String
+  windowStart    DateTime
+  windowEnd      DateTime
+  firstLegStartsAt DateTime
+  lastLegStartsAt  DateTime
+  status         ComboStatus   @default(ACTIVE)
+  generatedAt    DateTime      @default(now())
+  lastConfirmedAt DateTime     @default(now())
+  settledAt      DateTime?
+  legs           ComboLeg[]
+
+  @@index([status, kind, sportId, size])
+  @@index([generatedAt])
+  @@index([signature, status])
+}
+
+model ComboLeg {
+  id        String    @id @default(cuid())
+  comboId   String
+  combo     Combo     @relation(fields: [comboId], references: [id], onDelete: Cascade)
+  matchId   String
+  match     Match     @relation(fields: [matchId], references: [id])
+  position  Int
+  sportId   String
+  leagueId  String
+  pick      Side
+  prob      Float
+  odds      Float?
+  startsAt  DateTime
+  result    LegResult @default(PENDING)
+  settledAt DateTime?
+
+  /// Database-level guarantee: never two legs from the same match in one combo.
+  @@unique([comboId, matchId])
+  @@index([matchId])
+  @@index([result])
+}
+
+model ApiCallLog {
+  id          String   @id @default(cuid())
+  provider    String
+  scope       String
+  endpoint    String
+  params      String?
+  httpStatus  Int?
+  ok          Boolean
+  durationMs  Int
+  error       String?
+  remainingDay    Int?
+  remainingMinute Int?
+  calledAt    DateTime @default(now())
+
+  @@index([provider, calledAt])
+  @@index([ok, calledAt])
+}
+
+model ProviderQuota {
+  id            String   @id @default(cuid())
+  providerKey   String
+  windowType    String
+  windowStart   DateTime
+  used          Int      @default(0)
+  limit         Int
+  reportedRemaining Int?
+  stamps        Json?
+  updatedAt     DateTime @updatedAt
+
+  @@unique([providerKey, windowType])
+}
+
+model JobRun {
+  id         String    @id @default(cuid())
+  name       String
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+  status     String    @default("running")
+  summary    Json?
+  error      String?
+
+  @@index([name, startedAt])
+}
+
+model BacktestResult {
+  id           String   @id @default(cuid())
+  sportId      String
+  modelVersion String
+  sample       Int
+  accuracy     Float
+  brier        Float
+  logLoss      Float
+  baselineAccuracy Float
+  calibration  Json
+  periodFrom   DateTime?
+  periodTo     DateTime?
+  createdAt    DateTime @default(now())
+
+  @@index([sportId, createdAt])
+}
+
+model KeyValue {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+/// A Kalshi game-winner market linked to one side of one of our matches (refreshed by the `kalshi` job).
+model KalshiMarket {
+  id           String   @id @default(cuid())
+  matchId      String
+  match        Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  side         Side
+  seriesTicker String
+  eventTicker  String
+  marketTicker String
+  eventTitle   String
+  marketTitle  String
+  /// Best YES offer / bid in dollars (0..1). Null when the book is empty.
+  yesAsk       Float?
+  yesBid       Float?
+  fetchedAt    DateTime @default(now())
+
+  @@unique([matchId, side])
+  @@index([marketTicker])
+}
+
+/// A combo market created on Kalshi through the API, cached by its exact set of legs so it is created once.
+model KalshiCombo {
+  id               String   @id @default(cuid())
+  /// sha1 of the sorted leg market tickers.
+  legsKey          String   @unique
+  collectionTicker String
+  eventTicker      String
+  marketTicker     String
+  legTickers       String[]
+  yesAsk           Float?
+  createdById      String?
+  createdBy        User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt        DateTime @default(now())
+}
+
+/// A signed-in visitor. Identity lives in Firebase Auth; this row links it to app data.
+model User {
+  id           String        @id @default(cuid())
+  firebaseUid  String        @unique
+  email        String?
+  name         String?
+  photoUrl     String?
+  createdAt    DateTime      @default(now())
+  lastLoginAt  DateTime      @default(now())
+  kalshiCombos KalshiCombo[]
+}

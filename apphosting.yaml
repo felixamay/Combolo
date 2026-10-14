@@ -1,0 +1,35 @@
+# Firebase App Hosting (backend "combolo", us-east4). Secret values live in Cloud Secret Manager, never here.
+runConfig:
+  minInstances: 0
+  maxInstances: 2
+  concurrency: 80
+  memoryMiB: 1024
+
+env:
+  - variable: SITE_URL
+    value: https://combolo--combolo-app.us-east4.hosted.app
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    value: AIzaSyBHqTeiRtjkcIA1SUssH98d_01DWpY53qM
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: combolo-app.firebaseapp.com
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: combolo-app
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    value: 1:187821067252:web:bc5431245db29f5f56c7a1
+  - variable: FIREBASE_PROJECT_ID
+    value: combolo-app
+  - variable: FIREBASE_CLIENT_EMAIL
+    value: firebase-adminsdk-fbsvc@combolo-app.iam.gserviceaccount.com
+  - variable: KALSHI_API_KEY_ID
+    value: dad1468c-5d98-48d0-a114-4210d70d68cc
+
+  - variable: DATABASE_URL
+    secret: DATABASE_URL
+  - variable: FIREBASE_PRIVATE_KEY
+    secret: FIREBASE_PRIVATE_KEY
+  - variable: KALSHI_PRIVATE_KEY
+    secret: KALSHI_PRIVATE_KEY
+  - variable: CRON_SECRET
+    secret: CRON_SECRET
+  - variable: APISPORTS_KEY
+    secret: APISPORTS_KEY
