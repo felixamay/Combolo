@@ -1,0 +1,11 @@
+{
+  "auth": {
+    "providers": {
+      "emailPassword": true,
+      "googleSignIn": {
+        "oAuthBrandDisplayName": "Combolo",
+        "supportEmail": "felixames0808@gmail.com"
+      }
+    }
+  }
+}
