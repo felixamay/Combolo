@@ -7,5 +7,22 @@
         "supportEmail": "felixames0808@gmail.com"
       }
     }
-  }
+  },
+  "apphosting": [
+    {
+      "backendId": "combolo",
+      "rootDir": ".",
+      "ignore": [
+        "node_modules",
+        ".git",
+        ".next",
+        "firebase-debug.log",
+        "tests",
+        "test-results",
+        "playwright-report",
+        ".env",
+        ".env.*"
+      ]
+    }
+  ]
 }
