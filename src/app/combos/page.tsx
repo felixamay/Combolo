@@ -11,6 +11,7 @@ import { kalshiCanCreate } from "@/lib/providers/kalshi";
 import { kalshiSignInHref, kalshiSlipLegs } from "@/lib/kalshi/slip";
 import { getTz, list, single } from "@/lib/request";
 import { SPORTS, SPORT_IDS, type SportId } from "@/lib/sports";
+import { WINDOW_PHRASE } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Combos" };
@@ -93,7 +94,7 @@ export default async function CombosPage({ searchParams }: { searchParams: Promi
             <h2 id="mixed-h" className="mb-3 text-lg font-semibold">
               Mixed-sport combos (tracked)
             </h2>
-            <ComboGrid combos={mixed} emptyHint="No mixed combo can be built yet: fewer than 7 matches have a usable pick in the next 3 days. Nothing is padded." />
+            <ComboGrid combos={mixed} emptyHint={`No mixed combo can be built yet: fewer than 7 matches have a usable pick ${WINDOW_PHRASE}. Nothing is padded.`} />
           </section>
           <section aria-labelledby="single-h">
             <h2 id="single-h" className="mb-3 text-lg font-semibold">

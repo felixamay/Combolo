@@ -45,9 +45,9 @@ test.describe("home and sport pages", () => {
 
   test("sport page lists fixtures by day with picks, and says plainly when a combo is impossible", async ({ page }) => {
     await page.goto("/sport/tennis");
-    await expect(page.getByRole("heading", { name: /Day 1/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Today/ })).toBeVisible();
     await expect(page.getByTestId("match-row")).toHaveCount(9);
-    await expect(page.getByTestId("size-limit")).toContainText("Only 9 eligible tennis matches in the next 3 days");
+    await expect(page.getByTestId("size-limit")).toContainText("Only 9 eligible tennis matches today");
     await expect(page.getByTestId("combo-card")).toHaveCount(1);
     await page.goto("/sport/hockey");
     await expect(page.getByTestId("no-combos")).toContainText("Only 4 eligible ice hockey games");
@@ -78,7 +78,7 @@ test.describe("combos", () => {
 
   test("refuses to pad: not enough eligible matches", async ({ page }) => {
     await page.goto("/combos?size=12&sport=tennis");
-    await expect(page.getByTestId("insufficient")).toContainText("Only 9 eligible tennis matches in the next 3 days");
+    await expect(page.getByTestId("insufficient")).toContainText("Only 9 eligible tennis matches today");
     await expect(page.getByTestId("leg-row")).toHaveCount(0);
   });
 

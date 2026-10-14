@@ -23,7 +23,7 @@ export function MatchTable({ matches, tz, window, showSport = false }: { matches
         return (
           <section key={d.day} aria-labelledby={`day-${d.day}`}>
             <h2 id={`day-${d.day}`} className="mb-2 text-lg font-semibold">
-              Day {d.day} <span className="text-sm font-normal muted">· {new Intl.DateTimeFormat("en-US", { timeZone: tz, weekday: "long", month: "short", day: "numeric" }).format(d.start)} · {rows.length} match{rows.length === 1 ? "" : "es"}</span>
+              {window.days.length === 1 ? "Today" : `Day ${d.day}`} <span className="text-sm font-normal muted">· {new Intl.DateTimeFormat("en-US", { timeZone: tz, weekday: "long", month: "short", day: "numeric" }).format(d.start)} · {rows.length} match{rows.length === 1 ? "" : "es"}</span>
             </h2>
             {rows.length === 0 ? (
               <p className="text-sm muted">No matches stored for this day.</p>

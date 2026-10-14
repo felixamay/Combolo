@@ -84,7 +84,7 @@ describe("stored combos obey the hard rules", () => {
     expect(tennis12).toBe(0);
     const live = await buildLive({ size: 12, strategy: "TOP", tz: SEED_TZ, sports: ["tennis"] });
     expect(live.ok).toBe(false);
-    if (!live.ok) expect(live.message).toMatch(/^Only 9 eligible tennis matches in the next 3 days/);
+    if (!live.ok) expect(live.message).toMatch(/^Only 9 eligible tennis matches today/);
   });
 
   it("the database itself rejects two legs from the same match in one combo", async () => {

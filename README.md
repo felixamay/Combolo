@@ -11,11 +11,11 @@ form across nine sports. It shows every number behind a pick and **takes no bets
 
 | Rule | How it is enforced |
 |------|--------------------|
-| Window: matches starting after now and before the end of the **3rd calendar day** in the viewer's time zone (default `America/Chicago`, selectable in the header) | `src/lib/time.ts` + `filterEligible`/`validateCombo` in `src/lib/combos/engine.ts`; started matches are locked out of active combos by `expireStarted` on every results/refresh run |
+| Window: matches starting after now and before **midnight today** in the viewer's time zone (same-day combos; `WINDOW_DAYS` in `src/lib/time.ts`) (default `America/Chicago`, selectable in the header) | `src/lib/time.ts` + `filterEligible`/`validateCombo` in `src/lib/combos/engine.ts`; started matches are locked out of active combos by `expireStarted` on every results/refresh run |
 | 7–32 legs; sizes 7, 10, 12, 15, 20, 25, 32 are generated automatically, any size 7–32 can be built in the custom builder | `COMBO` in `config/admin.ts`, `isValidSize`, `generateStoredCombos`, `buildLive` |
 | One leg per match, never both sides | engine keeps one candidate per match; `ComboLeg @@unique([comboId, matchId])` in the database; `validateCombo` before every insert |
 | Single-sport and mixed combos, sport-labelled legs, filters (sport, league, day 1/2/3, min confidence, size, strategy) | `/combos`, `/sport/[slug]` |
-| Not enough eligible matches → say so, never pad | e.g. *"Only 9 eligible tennis matches in the next 3 days – a 12-leg combo needs 12. Nothing was padded."* |
+| Not enough eligible matches → say so, never pad | e.g. *"Only 9 eligible tennis matches today – a 12-leg combo needs 12. Nothing was padded."* |
 | Pick + probability per leg, prominent combined probability ("1 in N"), combined odds only if **every** leg has a real stored price | `CombinedProb`, `summarise` |
 | Regenerated after every refresh, stored with timestamps, history kept, legs marked won/lost | `Combo` lifecycle `ACTIVE → SUPERSEDED / LOCKED → WON / LOST / VOID`; `/history` shows hit rate per size |
 

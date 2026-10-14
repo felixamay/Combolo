@@ -64,11 +64,10 @@ export async function seedTestData(now = new Date()): Promise<SeedSummary> {
   const upcoming: Record<string, number> = {};
   const recentFinished: string[] = [];
 
-  const slotTime = (i: number): Date => {
-    const day = i % 3;
-    if (day === 0) return new Date(now.getTime() + (window.days[0].end.getTime() - now.getTime()) / 2 + Math.floor(i / 3) * 60_000);
-    return new Date(window.days[day].start.getTime() + 10 * 3600_000 + Math.floor(i / 3) * 25 * 60_000);
-  };
+  // Spread upcoming matches over the middle half of what is left of the (same-day) window, so every slot is
+  // eligible however late in the day the suite runs.
+  const remaining = window.end.getTime() - now.getTime();
+  const slotTime = (i: number): Date => new Date(now.getTime() + remaining / 4 + (i * remaining) / 2 / 400);
 
   let slot = 0;
   for (const spec of TEAM_SPECS) {

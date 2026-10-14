@@ -71,7 +71,7 @@ export default async function AboutModelPage() {
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">How combos are built</h2>
         <ul className="list-disc space-y-1 pl-5 text-sm">
-          <li>Only matches that start after now and before the end of the 3rd calendar day in your time zone are eligible; started matches drop out automatically.</li>
+          <li>Only matches that start after now and before midnight today in your time zone are eligible; started matches drop out automatically.</li>
           <li>
             Combos have {COMBO.MIN_SIZE}–{COMBO.MAX_SIZE} legs; generated sizes are {COMBO.SIZES.join(", ")}, and any custom size in range can be built live.
           </li>

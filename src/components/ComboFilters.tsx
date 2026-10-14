@@ -1,5 +1,6 @@
 import { COMBO } from "@config/admin";
 import { SPORTS } from "@/lib/sports";
+import { WINDOW_DAYS } from "@/lib/time";
 
 export interface FilterValues {
   sports: string[];
@@ -27,17 +28,19 @@ export function ComboFilters({ values, leagues }: { values: FilterValues; league
             ))}
           </div>
         </fieldset>
-        <fieldset>
-          <legend className="mb-1 text-xs font-semibold uppercase tracking-wide muted">Day</legend>
-          <div className="flex flex-col gap-1">
-            {["1", "2", "3"].map((d) => (
-              <label key={d} className="flex items-center gap-1.5 text-sm">
-                <input type="checkbox" name="day" value={d} defaultChecked={values.days.includes(d)} />
-                Day {d} {d === "1" ? "(today)" : d === "2" ? "(tomorrow)" : "(day after)"}
-              </label>
-            ))}
-          </div>
-        </fieldset>
+        {WINDOW_DAYS > 1 ? (
+          <fieldset>
+            <legend className="mb-1 text-xs font-semibold uppercase tracking-wide muted">Day</legend>
+            <div className="flex flex-col gap-1">
+              {["1", "2", "3"].slice(0, WINDOW_DAYS).map((d) => (
+                <label key={d} className="flex items-center gap-1.5 text-sm">
+                  <input type="checkbox" name="day" value={d} defaultChecked={values.days.includes(d)} />
+                  Day {d} {d === "1" ? "(today)" : d === "2" ? "(tomorrow)" : "(day after)"}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        ) : null}
         <div className="space-y-3">
           <label className="block text-sm">
             <span className="mb-1 block text-xs font-semibold uppercase tracking-wide muted">League</span>

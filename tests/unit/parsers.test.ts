@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { HIGHLIGHTLY_PRODUCTS } from "../../config/admin";
+import { flattenGameRow } from "../../src/lib/providers/apisports";
 import { normaliseEvent } from "../../src/lib/providers/apitennis";
 import { normaliseMatch as fdMatch } from "../../src/lib/providers/footballdata";
 import { normaliseMatch as hlMatch } from "../../src/lib/providers/highlightly";
@@ -138,5 +139,26 @@ describe("Sackmann CSV parser", () => {
   it("counts sets", () => {
     expect(setsFromScore("6-4 3-6 7-6(5)")).toEqual({ winner: 2, loser: 1 });
     expect(setsFromScore("W/O")).toBeNull();
+  });
+});
+
+describe("API-Sports american football rows", () => {
+  it("flattens the nested game object into the shared games shape", () => {
+    const raw = {
+      game: { id: 17519, date: { timezone: "UTC", date: "2026-10-18", time: "17:00", timestamp: 1792342800 }, status: { short: "NS", long: "Not Started" } },
+      league: { id: 1, name: "NFL", season: "2026", logo: "l.png", country: { name: "USA", code: "US" } },
+      teams: { home: { id: 1, name: "Las Vegas Raiders", logo: "a.png" }, away: { id: 2, name: "Denver Broncos", logo: "b.png" } },
+      scores: { home: { total: null }, away: { total: null } },
+    };
+    const flat = flattenGameRow(raw) as Record<string, unknown>;
+    expect(flat.id).toBe(17519);
+    expect(flat.date).toBe("2026-10-18T17:00:00.000Z");
+    expect(flat.status).toEqual({ short: "NS", long: "Not Started" });
+    expect(flat.country).toEqual({ name: "USA", code: "US" });
+  });
+
+  it("leaves rows of the other games APIs untouched", () => {
+    const row = { id: 5, date: "2026-10-18T17:00:00+00:00", status: { short: "NS" } };
+    expect(flattenGameRow(row)).toBe(row);
   });
 });

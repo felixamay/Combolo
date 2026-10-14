@@ -7,6 +7,7 @@ import { FreshnessBar, PageTitle } from "@/components/ui";
 import { activeCombos, getFreshness, windowMatches } from "@/lib/queries";
 import { getTz } from "@/lib/request";
 import { sportBySlug } from "@/lib/sports";
+import { WINDOW_PHRASE } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +27,7 @@ export default async function SportPage({ params }: { params: Promise<{ slug: st
     <div className="space-y-8">
       <PageTitle
         title={`${sport.icon} ${sport.name}`}
-        subtitle={`${matches.length} scheduled in the next 3 days, ${eligible} with a usable pick.`}
+        subtitle={`${matches.length} scheduled ${WINDOW_PHRASE}, ${eligible} with a usable pick.`}
         right={
           <Link href={`/rankings/${sport.slug}`} className="btn">
             {sport.individual ? "Rankings" : "Standings"}
@@ -41,13 +42,13 @@ export default async function SportPage({ params }: { params: Promise<{ slug: st
         </h2>
         {eligible < COMBO.MAX_SIZE ? (
           <p className="mb-3 text-sm muted" data-testid="size-limit">
-            Only {eligible} eligible {sport.pluralLabel} in the next 3 days
+            Only {eligible} eligible {sport.pluralLabel} {WINDOW_PHRASE}
             {eligible >= COMBO.MIN_SIZE ? `, so ${sport.name.toLowerCase()} combos can have at most ${eligible} legs.` : ` – fewer than the ${COMBO.MIN_SIZE} legs a combo needs.`} Nothing is padded.
           </p>
         ) : null}
         <ComboGrid
           combos={combos}
-          emptyHint={`Only ${eligible} eligible ${sport.pluralLabel} in the next 3 days – a 7-leg combo needs 7. Nothing was padded. You can still build combos mixing sports.`}
+          emptyHint={`Only ${eligible} eligible ${sport.pluralLabel} ${WINDOW_PHRASE} – a 7-leg combo needs 7. Nothing was padded. You can still build combos mixing sports.`}
         />
         <p className="mt-2 text-sm">
           <Link className="underline" href={`/combos?sport=${sport.id}`}>

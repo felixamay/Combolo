@@ -1,10 +1,13 @@
 /**
  * Timezone-aware calendar helpers (no external dependency, DST-safe via Intl).
- * The combo window is "now .. end of the 3rd calendar day" in the user's timezone
- * (today = day 1, tomorrow = day 2, day after = day 3).
+ * The combo window is "now .. end of the last calendar day of the window" in the user's timezone
+ * (today = day 1, tomorrow = day 2, day after = day 3). Combos are same-day: the window is today only.
  */
 
-export const WINDOW_DAYS = 3;
+export const WINDOW_DAYS: 1 | 2 | 3 = 1;
+
+/** How the window reads in copy: "Only 5 eligible matches today", "Sports today". */
+export const WINDOW_PHRASE = WINDOW_DAYS === 1 ? "today" : `in the next ${WINDOW_DAYS} days`;
 
 export function isValidTimeZone(tz: string): boolean {
   try {
@@ -96,14 +99,14 @@ export interface DayWindow {
 export interface ComboWindow {
   tz: string;
   now: Date;
-  /** Exclusive end of the 3rd calendar day. */
+  /** Exclusive end of the window's last calendar day. */
   end: Date;
   days: DayWindow[];
 }
 
-export function getComboWindow(now: Date, tz: string): ComboWindow {
+export function getComboWindow(now: Date, tz: string, windowDays: 1 | 2 | 3 = WINDOW_DAYS): ComboWindow {
   const days: DayWindow[] = [];
-  for (let i = 0; i < WINDOW_DAYS; i++) {
+  for (let i = 0; i < windowDays; i++) {
     const dayStart = startOfLocalDay(now, tz, i);
     const dayEnd = startOfLocalDay(now, tz, i + 1);
     days.push({
@@ -113,10 +116,10 @@ export function getComboWindow(now: Date, tz: string): ComboWindow {
       dateKey: localDateKey(dayStart, tz),
     });
   }
-  return { tz, now, end: days[WINDOW_DAYS - 1].end, days };
+  return { tz, now, end: days[windowDays - 1].end, days };
 }
 
-/** True when the match is still to start and starts before the end of day 3 (local). */
+/** True when the match is still to start and starts before the end of the window (local). */
 export function isInWindow(startsAt: Date, window: ComboWindow): boolean {
   return startsAt.getTime() > window.now.getTime() && startsAt.getTime() < window.end.getTime();
 }

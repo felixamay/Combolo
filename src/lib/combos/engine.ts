@@ -1,11 +1,11 @@
 import { createHash } from "node:crypto";
 import { COMBO } from "../../../config/admin";
 import { SPORTS, type SportId } from "../sports";
-import { dayIndexOf, getComboWindow, isInWindow, type ComboWindow } from "../time";
+import { WINDOW_DAYS, WINDOW_PHRASE, dayIndexOf, getComboWindow, isInWindow, type ComboWindow } from "../time";
 
 /**
  * Pure combo engine – no database, no clock. Every hard rule from the product brief is enforced here:
- *  1. window: only matches that start after `now` and before the end of calendar day 3 (user tz)
+ *  1. window: only matches that start after `now` and before the end of the window (today, user tz)
  *  2. size: 7..32 legs inclusive
  *  3. one leg per match (never both sides of a match)
  *  5. never pad: if there are not enough eligible matches the result is an explicit INSUFFICIENT outcome
@@ -139,7 +139,7 @@ function pickDiversified(sorted: Candidate[], size: number): Candidate[] {
 export function insufficientMessage(eligible: number, size: number, sports: SportId[] | undefined, days: Array<1 | 2 | 3> | undefined, kalshiOnly = false): string {
   const scope = sports && sports.length === 1 ? SPORTS[sports[0]].pluralLabel : sports && sports.length > 1 ? "matches in the selected sports" : "matches across all sports";
   const eligibleLabel = eligible === 1 ? "eligible" : "eligible";
-  const when = days && days.length && days.length < 3 ? `on day ${days.join(", ")}` : "in the next 3 days";
+  const when = days && days.length && days.length < WINDOW_DAYS ? `on day ${days.join(", ")}` : WINDOW_PHRASE;
   return `Only ${eligible} ${eligibleLabel} ${scope}${kalshiOnly ? " listed on Kalshi" : ""} ${when} – a ${size}-leg combo needs ${size}. Nothing was padded.`;
 }
 

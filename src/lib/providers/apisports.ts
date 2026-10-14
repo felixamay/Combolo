@@ -156,12 +156,32 @@ function normaliseGame(product: ApiSportsProduct, r: z.infer<typeof gamesRow>, h
   };
 }
 
+/**
+ * The American football API nests id/date/status under `game`, with `date` as {date, time, timestamp} and the
+ * country under `league`; flatten it to the shape every other games API uses.
+ */
+export function flattenGameRow(raw: unknown): unknown {
+  const r = obj(raw);
+  const game = obj(r?.game);
+  if (!r || !game) return raw;
+  const date = obj(game.date);
+  const ts = num(date?.timestamp);
+  const league = obj(r.league);
+  return {
+    ...r,
+    id: game.id,
+    date: ts !== null ? new Date(ts * 1000).toISOString() : (str(date?.date) ?? game.date),
+    status: game.status,
+    country: r.country ?? league?.country,
+  };
+}
+
 async function normaliseRows(product: ApiSportsProduct, rows: unknown[], endpoint: string, historical: boolean): Promise<NormFixture[]> {
   if (product.listPath === "/fixtures") {
     const valid = await validateRows("apisports", endpoint, rows, footballRow);
     return valid.map((r) => normaliseFootball(product, r, historical)).filter((x): x is NormFixture => !!x);
   }
-  const valid = await validateRows("apisports", endpoint, rows, gamesRow);
+  const valid = await validateRows("apisports", endpoint, rows.map(flattenGameRow), gamesRow);
   return valid.map((r) => normaliseGame(product, r, historical)).filter((x): x is NormFixture => !!x);
 }
 

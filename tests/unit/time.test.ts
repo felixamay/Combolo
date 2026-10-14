@@ -1,12 +1,22 @@
 import { describe, expect, it } from "vitest";
-import { dayIndexOf, getComboWindow, isInWindow, localDateKey, startOfLocalDay, zonedTimeToUtc } from "@/lib/time";
+import { WINDOW_DAYS, dayIndexOf, getComboWindow, isInWindow, localDateKey, startOfLocalDay, zonedTimeToUtc } from "@/lib/time";
 
 const CHI = "America/Chicago";
 
 describe("combo window (hard rule 1)", () => {
-  it("ends at local midnight after the 3rd calendar day (CDT, UTC-5)", () => {
+  it("is same-day by default: now until local midnight tonight", () => {
     const now = new Date("2026-10-12T15:30:00Z"); // 10:30 Mon in Chicago
     const w = getComboWindow(now, CHI);
+    expect(WINDOW_DAYS).toBe(1);
+    expect(w.days.map((d) => d.dateKey)).toEqual(["2026-10-12"]);
+    expect(w.end.toISOString()).toBe("2026-10-13T05:00:00.000Z");
+    expect(isInWindow(new Date("2026-10-13T04:59:00Z"), w)).toBe(true);
+    expect(isInWindow(new Date("2026-10-13T05:00:00Z"), w)).toBe(false);
+  });
+
+  it("ends at local midnight after the 3rd calendar day (CDT, UTC-5)", () => {
+    const now = new Date("2026-10-12T15:30:00Z"); // 10:30 Mon in Chicago
+    const w = getComboWindow(now, CHI, 3);
     // day 3 = Wed 14 Oct, window ends Thu 15 Oct 00:00 CDT = 05:00Z
     expect(w.end.toISOString()).toBe("2026-10-15T05:00:00.000Z");
     expect(w.days.map((d) => d.dateKey)).toEqual(["2026-10-12", "2026-10-13", "2026-10-14"]);
@@ -14,7 +24,7 @@ describe("combo window (hard rule 1)", () => {
 
   it("includes a match 1 minute before the end and excludes one at / after the end", () => {
     const now = new Date("2026-10-12T15:30:00Z");
-    const w = getComboWindow(now, CHI);
+    const w = getComboWindow(now, CHI, 3);
     expect(isInWindow(new Date("2026-10-15T04:59:00Z"), w)).toBe(true);
     expect(isInWindow(new Date("2026-10-15T05:00:00Z"), w)).toBe(false);
     expect(isInWindow(new Date("2026-10-15T05:01:00Z"), w)).toBe(false);
@@ -23,7 +33,7 @@ describe("combo window (hard rule 1)", () => {
 
   it("excludes matches that have already started (or start exactly now)", () => {
     const now = new Date("2026-10-12T15:30:00Z");
-    const w = getComboWindow(now, CHI);
+    const w = getComboWindow(now, CHI, 3);
     expect(isInWindow(new Date("2026-10-12T15:29:59Z"), w)).toBe(false);
     expect(isInWindow(now, w)).toBe(false);
     expect(isInWindow(new Date("2026-10-12T15:30:01Z"), w)).toBe(true);
@@ -31,7 +41,7 @@ describe("combo window (hard rule 1)", () => {
 
   it("assigns day 1/2/3 using the user's timezone, not UTC", () => {
     const now = new Date("2026-10-12T15:30:00Z");
-    const w = getComboWindow(now, CHI);
+    const w = getComboWindow(now, CHI, 3);
     // 03:30Z on 13th is still the 12th in Chicago -> day 1
     expect(dayIndexOf(new Date("2026-10-13T03:30:00Z"), w)).toBe(1);
     // 05:00Z on 13th is midnight in Chicago -> day 2
@@ -51,7 +61,7 @@ describe("combo window (hard rule 1)", () => {
 
   it("handles the DST change (clocks go back 1 Nov 2026 in Chicago)", () => {
     const now = new Date("2026-10-31T12:00:00Z"); // Sat 7:00 CDT
-    const w = getComboWindow(now, CHI);
+    const w = getComboWindow(now, CHI, 3);
     // days: Sat 31 Oct, Sun 1 Nov (25h), Mon 2 Nov -> ends Tue 3 Nov 00:00 CST = 06:00Z
     expect(w.end.toISOString()).toBe("2026-11-03T06:00:00.000Z");
     const sunStart = startOfLocalDay(now, CHI, 1);

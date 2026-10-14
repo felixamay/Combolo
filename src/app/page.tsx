@@ -5,6 +5,7 @@ import { activeCombos, getFreshness, windowCounts } from "@/lib/queries";
 import { getTz } from "@/lib/request";
 import { SPORTS } from "@/lib/sports";
 import { getComboWindow, formatInTz } from "@/lib/time";
+import { WINDOW_PHRASE } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +19,7 @@ export default async function HomePage() {
     <div className="space-y-8">
       <PageTitle
         title="Data-driven combos from real head-to-head stats"
-        subtitle={`Matches starting between now and the end of ${formatInTz(window.days[2].start, tz, { weekday: "long", month: "short", day: "numeric", hour: undefined, minute: undefined })} (${tz.replace(/_/g, " ")}). Every combo has 7–32 legs, one leg per match.`}
+        subtitle={`Matches starting between now and the end of ${formatInTz(window.days[window.days.length - 1].start, tz, { weekday: "long", month: "short", day: "numeric", hour: undefined, minute: undefined })} (${tz.replace(/_/g, " ")}). Every combo has 7–32 legs, one leg per match.`}
       />
       <FreshnessBar f={fresh} />
 
@@ -31,7 +32,7 @@ export default async function HomePage() {
 
       <section aria-labelledby="sports-h">
         <h2 id="sports-h" className="mb-3 text-lg font-semibold">
-          Sports in the next 3 days
+          Sports {WINDOW_PHRASE}
         </h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           {Object.values(SPORTS).map((s) => {
@@ -67,7 +68,7 @@ export default async function HomePage() {
           emptyHint={
             never
               ? "Combos appear after the first data refresh."
-              : `Not enough eligible matches for a 7-leg combo right now (${counts.eligible} match${counts.eligible === 1 ? "" : "es"} with a usable pick in the next 3 days, 7 needed). Nothing is padded.`
+              : `Not enough eligible matches for a 7-leg combo right now (${counts.eligible} match${counts.eligible === 1 ? "" : "es"} with a usable pick ${WINDOW_PHRASE}, 7 needed). Nothing is padded.`
           }
         />
       </section>

@@ -31,3 +31,5 @@ env:
     secret: KALSHI_PRIVATE_KEY
   - variable: CRON_SECRET
     secret: CRON_SECRET
+  - variable: APISPORTS_KEY
+    secret: APISPORTS_KEY

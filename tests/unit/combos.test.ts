@@ -4,7 +4,7 @@ import { COMBO } from "../../config/admin";
 import type { SportId } from "@/lib/sports";
 
 const TZ = "America/Chicago";
-const NOW = new Date("2026-10-12T15:30:00Z"); // Mon 10:30 CDT; window ends 2026-10-15T05:00Z
+const NOW = new Date("2026-10-12T15:30:00Z"); // Mon 10:30 CDT; same-day window ends 2026-10-13T05:00Z
 
 function cand(i: number, over: Partial<Candidate> = {}): Candidate {
   return {
@@ -12,7 +12,7 @@ function cand(i: number, over: Partial<Candidate> = {}): Candidate {
     sport: "football",
     leagueId: "L1",
     leagueName: "League One",
-    startsAt: new Date(NOW.getTime() + (i + 1) * 3600_000),
+    startsAt: new Date(NOW.getTime() + (i + 1) * 10 * 60_000),
     pick: "HOME",
     prob: 0.9 - i * 0.004,
     homeName: `H${i}`,
@@ -52,12 +52,12 @@ describe("rule 2 – combo size 7..32", () => {
 });
 
 describe("rule 1 – window", () => {
-  it("excludes started matches, matches at/after the end of day 3 and far-future matches", () => {
+  it("excludes started matches, matches at/after local midnight and later days", () => {
     const good = many(10);
     const started = cand(100, { matchId: "started", startsAt: new Date(NOW.getTime() - 60_000) });
     const exactlyNow = cand(101, { matchId: "now", startsAt: NOW });
-    const atEnd = cand(102, { matchId: "atEnd", startsAt: new Date("2026-10-15T05:00:00Z") });
-    const justBefore = cand(103, { matchId: "justBefore", startsAt: new Date("2026-10-15T04:59:00Z"), prob: 0.5 });
+    const atEnd = cand(102, { matchId: "atEnd", startsAt: new Date("2026-10-13T05:00:00Z") });
+    const justBefore = cand(103, { matchId: "justBefore", startsAt: new Date("2026-10-13T04:59:00Z"), prob: 0.5 });
     const far = cand(104, { matchId: "far", startsAt: new Date("2026-10-20T12:00:00Z") });
     const ids = filterEligible([...good, started, exactlyNow, atEnd, justBefore, far], { now: NOW, tz: TZ }).map((c) => c.matchId);
     expect(ids).toContain("justBefore");
@@ -73,10 +73,10 @@ describe("rule 1 – window", () => {
   });
 
   it("window is evaluated in the requested timezone", () => {
-    // 04:30Z on 15 Oct is still day 3 in Chicago (23:30 on the 14th) but already the 15th in Tokyo (day 3 for Tokyo ends 15th 15:00Z)
-    const c = cand(1, { startsAt: new Date("2026-10-15T04:30:00Z") });
+    // 04:30Z on 13 Oct is still the 12th in Chicago (23:30); in Tokyo "today" is the 13th, which ends 13th 15:00Z
+    const c = cand(1, { startsAt: new Date("2026-10-13T04:30:00Z") });
     expect(filterEligible([c], { now: NOW, tz: "America/Chicago" })).toHaveLength(1);
-    const late = cand(2, { startsAt: new Date("2026-10-15T06:00:00Z") });
+    const late = cand(2, { startsAt: new Date("2026-10-13T06:00:00Z") });
     expect(filterEligible([late], { now: NOW, tz: "America/Chicago" })).toHaveLength(0);
     expect(filterEligible([late], { now: NOW, tz: "Asia/Tokyo" })).toHaveLength(1);
   });
@@ -120,7 +120,7 @@ describe("rule 5 – insufficient matches are reported, never padded", () => {
     if (!r.ok) {
       expect(r.reason).toBe("INSUFFICIENT");
       expect(r.eligibleCount).toBe(9);
-      expect(r.message).toMatch(/Only 9 eligible tennis matches in the next 3 days/);
+      expect(r.message).toMatch(/Only 9 eligible tennis matches today/);
     }
   });
 
@@ -138,7 +138,7 @@ describe("rule 5 – insufficient matches are reported, never padded", () => {
 
   it("message wording for a single eligible match and day filters", () => {
     expect(insufficientMessage(1, 7, ["hockey"], undefined)).toContain("Only 1 eligible ice hockey games");
-    expect(insufficientMessage(3, 7, undefined, [1])).toContain("on day 1");
+    expect(insufficientMessage(3, 7, undefined, [1])).toContain("matches across all sports today");
   });
 });
 
@@ -162,7 +162,9 @@ describe("rule 4 – categories and filters", () => {
       cand(300, { matchId: "tomorrow", sport: "football", leagueId: "PL", startsAt: new Date("2026-10-13T20:00:00Z"), prob: 0.95 }),
     ];
     expect(filterEligible(cands, { now: NOW, tz: TZ, leagueIds: ["LL"] })).toHaveLength(8);
-    expect(filterEligible(cands, { now: NOW, tz: TZ, days: [2] }).map((c) => c.matchId)).toEqual(["tomorrow"]);
+    // Same-day window: tomorrow's match is never eligible, whatever the day filter says.
+    expect(filterEligible(cands, { now: NOW, tz: TZ }).map((c) => c.matchId)).not.toContain("tomorrow");
+    expect(filterEligible(cands, { now: NOW, tz: TZ, days: [1] })).toHaveLength(16);
     expect(filterEligible(cands, { now: NOW, tz: TZ, minConfidence: 0.7 }).every((c) => c.prob >= 0.7)).toBe(true);
     expect(filterEligible(cands, { now: NOW, tz: TZ, minConfidence: 0.99 })).toHaveLength(0);
   });
@@ -248,7 +250,7 @@ describe("Kalshi-only combos", () => {
     expect(res.ok).toBe(true);
     const only = buildCombo(cands, req(7, { kalshiOnly: true }));
     expect(only.ok).toBe(false);
-    if (!only.ok) expect(only.message).toBe("Only 6 eligible matches across all sports listed on Kalshi in the next 3 days – a 7-leg combo needs 7. Nothing was padded.");
+    if (!only.ok) expect(only.message).toBe("Only 6 eligible matches across all sports listed on Kalshi today – a 7-leg combo needs 7. Nothing was padded.");
     const ok = buildCombo(many(9).map((c, i) => ({ ...c, kalshi: k(i) })), req(7, { kalshiOnly: true }));
     expect(ok.ok && ok.legs.every((l) => l.kalshi)).toBe(true);
   });

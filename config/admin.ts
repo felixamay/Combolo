@@ -80,7 +80,8 @@ export interface ApiSportsProduct {
   host: string;
   /** Path used for the by-date listing. */
   listPath: "/fixtures" | "/games";
-  h2hPath: "/fixtures/headtohead" | "/games/h2h";
+  /** Basketball has no /games/h2h: its head-to-head is GET /games?h2h=A-B. */
+  h2hPath: "/fixtures/headtohead" | "/games/h2h" | "/games";
   /** Max standings calls per day for this product. */
   standingsBudget: number;
   /** Max H2H calls per day for this product. */
@@ -89,7 +90,7 @@ export interface ApiSportsProduct {
 
 export const APISPORTS_PRODUCTS: ApiSportsProduct[] = [
   { scope: "football", sport: "football", host: "v3.football.api-sports.io", listPath: "/fixtures", h2hPath: "/fixtures/headtohead", standingsBudget: 25, h2hBudget: 45 },
-  { scope: "basketball", sport: "basketball", host: "v1.basketball.api-sports.io", listPath: "/games", h2hPath: "/games/h2h", standingsBudget: 10, h2hBudget: 60 },
+  { scope: "basketball", sport: "basketball", host: "v1.basketball.api-sports.io", listPath: "/games", h2hPath: "/games", standingsBudget: 10, h2hBudget: 60 },
   { scope: "hockey", sport: "hockey", host: "v1.hockey.api-sports.io", listPath: "/games", h2hPath: "/games/h2h", standingsBudget: 10, h2hBudget: 60 },
   { scope: "baseball", sport: "baseball", host: "v1.baseball.api-sports.io", listPath: "/games", h2hPath: "/games/h2h", standingsBudget: 10, h2hBudget: 60 },
   { scope: "american-football", sport: "american-football", host: "v1.american-football.api-sports.io", listPath: "/games", h2hPath: "/games/h2h", standingsBudget: 10, h2hBudget: 60 },
@@ -272,7 +273,7 @@ export const COMBO = {
   MAX_SIZE: 32,
   /** Sizes generated automatically after every refresh. */
   SIZES: [7, 10, 12, 15, 20, 25, 32],
-  WINDOW_DAYS: 3,
+  WINDOW_DAYS: 1,
   /** Probability threshold used for the "banker" tag in the UI only. */
   HIGH_CONFIDENCE: 0.7,
 } as const;
